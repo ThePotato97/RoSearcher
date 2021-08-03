@@ -23,6 +23,4 @@ It works by searching every single game server for avatar (it matches the cache'
 
 
 ## Extensions 
-[Chrome](https://chrome.google.com/webstore/detail/rosearcher/jhamlfgelgpjgbifbpepmclhnellfoaa?hl=en-GB&gl=US)
-
 [Firefox](https://addons.mozilla.org/en-US/firefox/addon/rosearcher/)
