@@ -1,7 +1,7 @@
 let runningGames = document.getElementById("rbx-running-games");
 let currentInput = "";
 let isLoading = false;
-Roblox = window.Roblox;
+const Roblox = window.Roblox;
 
 function getCurrentUser() {
     let element = document.getElementsByName("user-data")[0];
@@ -83,7 +83,7 @@ function displayServer(server) {
     clearAddonServerContainer();
 
     var container = document.getElementById('rbx-addon-server-search');
-    if (container === null) throw 'Could not find rbx-addon-search container!';
+    if (container === null) throw new Error('Could not find rbx-addon-search container!');
 
     // creating elements
     var li = document.createElement('li');
@@ -143,7 +143,7 @@ function getUserIdFromName(name) {
     return new Promise((res, rej) => {
         fetch(`https://www.roblox.com/users/profile?username=${name}`)
             .then(r => {
-                if (!r.ok) throw 'Invalid response';
+                if (!r.ok) throw new Error('Invalid response');
                 return r.url.match(/\d+/)[0];
             })
             .then(id => {
@@ -178,6 +178,10 @@ function getAvatar(userId, callback) {
 }
 
 function getPlaceId() {
+    let playButton = document.getElementById("rbx-private-servers");
+    if (playButton)
+        return playButton.getAttribute("data-placeid");
+
     let urlMatch = document.location.href.match(/games\/(\d+)\//);
     if (urlMatch && !Number.isNaN(Number(urlMatch[1])))
         return urlMatch[1];
@@ -191,7 +195,7 @@ function findServer(avatar, userId, callback, startIndex = 0) {
     const placeId = getPlaceId();
     fetch(`https://www.roblox.com/games/getgameinstancesjson?placeId=${placeId}&startIndex=${startIndex}`)
         .then(r => {
-            if (!r.ok) throw 'Invalid response!';
+            if (!r.ok) throw new Error('Invalid response!');
             return r.json()
         })
         .then(r => {
@@ -218,7 +222,7 @@ function findServer(avatar, userId, callback, startIndex = 0) {
         .catch(ex => {
             console.error(exc);
             isLoading = false;
-            addonError('Error occurred during callback!');
+            addonError('Error occured during callback!');
         });
 }
 
@@ -248,7 +252,7 @@ function addonError(err) {
 
 function loadingAddonServerContainer(i) {
     var thing = document.getElementById('rbx-addon-server-search');
-    if (thing === null) throw 'Could not find addon server container!';
+    if (thing === null) throw new Error('Could not find addon server container!');
 
     var loading = document.getElementById('rbx-addon-loading');
     if (loading !== null)
@@ -266,7 +270,7 @@ function displayAddonServerContainer(i) {
     var thing = document.getElementById('rbx-addon-server-search');
     var rbxSrvCont = document.getElementById('rbx-game-server-item-container');
     var loadMore = document.getElementsByClassName('rbx-running-games-footer');
-    if (rbxSrvCont === null) throw 'could not find server container';
+    if (rbxSrvCont === null) throw new Error('could not find server container');
 
     if (thing === null) {
         createGameServerContainer();
@@ -288,7 +292,7 @@ function displayAddonServerContainer(i) {
 
 function addonGameServerContainerHasItems(i) {
     var thing = document.getElementById('rbx-addon-server-search');
-    if (thing === null) throw 'Could not find server container!';
+    if (thing === null) throw new Error('Could not find server container!');
 
     if (i === true) {
         thing.className = 'section rbx-game-server-item-container stack-list';
@@ -299,7 +303,7 @@ function addonGameServerContainerHasItems(i) {
 
 function createGameServerContainer() {
     var rbxSrvCont = document.getElementById('rbx-game-server-item-container');
-    if (rbxSrvCont === null) throw 'Could not find server container!';
+    if (rbxSrvCont === null) throw new Error('Could not find server container!');
 
     var newNode = rbxSrvCont.cloneNode(false);
     newNode.id = "rbx-addon-server-search"
