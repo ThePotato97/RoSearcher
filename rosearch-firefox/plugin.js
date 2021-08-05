@@ -26,6 +26,7 @@ const request = async(url, options = {}) => {
     }
 };
 const onSubmit = async(user, isUsername) => {
+    if (isLoading) return
     addonError(null);
     addonGameServerContainerHasItems(false);
     clearAddonServerContainer();
@@ -341,12 +342,12 @@ function createInput(node) {
 
     input.addEventListener('keyup', (e) => {
         if (e.which !== 13) {
+
             onNewInput(input.value);
         }
     });
     input.addEventListener('keydown', (e) => {
         if (e.which == 13 && input.value.trim() !== "") {
-            if (isLoading) return
             onSubmit(input.value, true);
         }
     });

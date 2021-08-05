@@ -26,6 +26,7 @@ const request = async(url, options = {}) => {
     }
 };
 const onSubmit = async(user, isUsername) => {
+    if (isLoading) return
     addonError(null);
     addonGameServerContainerHasItems(false);
     clearAddonServerContainer();
@@ -207,6 +208,7 @@ function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
+let amount = 0
 const findServer = async(userId, avatar, placeID, total, offset, callback) => {
     const percentage = Math.round((offset / total) * 100);
     const bar = document.getElementById('bar');
@@ -227,6 +229,8 @@ const findServer = async(userId, avatar, placeID, total, offset, callback) => {
         .find(server => server.CurrentPlayers
             .find(player => player.Id === userId || player.Thumbnail.Url === avatar));
     if (!found) return findServer(userId, avatar, placeID, data[0].TotalCollectionSize, offset + REQUEST_LIMIT * 10, callback);
+
+    console.log(found)
     return found;
 };
 
@@ -338,12 +342,12 @@ function createInput(node) {
 
     input.addEventListener('keyup', (e) => {
         if (e.which !== 13) {
+
             onNewInput(input.value);
         }
     });
     input.addEventListener('keydown', (e) => {
         if (e.which == 13 && input.value.trim() !== "") {
-            if (isLoading) return
             onSubmit(input.value, true);
         }
     });
