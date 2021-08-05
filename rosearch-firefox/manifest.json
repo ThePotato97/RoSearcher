@@ -11,7 +11,7 @@
         "*://*.rbxcdn.com/*"
     ],
     "content_scripts": [{
-        "matches": ["*://*.roblox.com/*"],
+        "matches": ["*://*.roblox.com/games/*"],
         "run_at": "document_end",
         "css": ["styles.css"],
         "js": ["plugin.js"]
