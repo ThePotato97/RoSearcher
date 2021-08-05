@@ -1,3 +1,6 @@
+const REQUEST_LIMIT = 40;
+const RETRY_LIMIT = 100;
+
 let runningGames = document.getElementById("rbx-running-games");
 let currentInput = "";
 let isLoading = false;
@@ -12,25 +15,40 @@ function getCurrentUser() {
     return [];
 }
 
-function onSubmit(input, isUsername) {
+const request = async(url, options = {}) => {
+    const { retry } = options;
+    try {
+        return await fetch(`https://${url}`, options).then(r => r.json());
+    } catch (e) {
+        console.log(e)
+        if (!retry || retry === 1) throw e;
+        return request(url, {...options, retry: retry - 1 });
+    }
+};
+const onSubmit = async(user, isUsername) => {
     addonError(null);
     addonGameServerContainerHasItems(false);
     clearAddonServerContainer();
     loadingAddonServerContainer(true);
-
     let cb = (r) => {
         if (r.ok) {
-            console.log(`%c[Server Searcher] User avatar ${r.url}`, "color: #424242; font-size:16px;");
-            findServer(r.url, input, (success, server) => {
-                isLoading = false;
-                if (success) {
-                    console.log(`%c[Server Searcher] User found! ${JSON.stringify(server)}`, "color: #424242; font-size:16px;");
-                    displayServer(server);
-                } else {
-                    console.log(`%c[Server Searcher] Couldn't find user`, "color: #424242; font-size:16px;");
-                    addonError('Could not find user in server!');
-                }
-            });
+            const placeId = getPlaceId();
+            request(`www.roblox.com/games/getgameinstancesjson?placeId=${placeId}&startIndex=999999999`).then((response) => {
+                const { TotalCollectionSize: total } = response
+                console.log(`%c[Server Searcher] User avatar ${r.url}`, "color: #424242; font-size:16px;");
+                findServer(user, r.url, placeId, total, 0).then((server) => {
+                    console.log(server)
+                    isLoading = false;
+
+                    if (!server.error) {
+                        console.log(`%c[Server Searcher] User found! ${JSON.stringify(server)}`, "color: #424242; font-size:16px;");
+                        displayServer(server)
+                    } else {
+                        console.log(`%c[Server Searcher] Couldn't find user`, "color: #424242; font-size:16px;");
+                        addonError('Could not find user in server!');
+                    }
+                })
+            })
         } else {
             isLoading = false;
             console.log(`%c[Server Searcher] Couldn't get user avatar`, "color: #424242; font-size:16px;");
@@ -41,14 +59,14 @@ function onSubmit(input, isUsername) {
     isLoading = true;
 
     if (isUsername) {
-        getUserIdFromName(input).then(id => {
+        getUserIdFromName(user).then(id => {
             getAvatar(id, cb);
         }).catch(e => {
             isLoading = false;
             addonError('Error occurred while fetching avatar');
         });
     } else {
-        getAvatar(input, cb);
+        getAvatar(user, cb);
     }
 }
 
@@ -185,44 +203,32 @@ function getPlaceId() {
     return addonError('Unable to get place ID!');
 }
 
-function findServer(avatar, userId, callback, startIndex = 0) {
-    if (!isLoading) return;
-
-    const placeId = getPlaceId();
-    fetch(`https://www.roblox.com/games/getgameinstancesjson?placeId=${placeId}&startIndex=${startIndex}`)
-        .then(r => {
-            if (!r.ok) throw new Error('Invalid response!');
-            return r.json()
-        })
-        .then(r => {
-            if (!isLoading) return;
-            var count = r['Collection'].length;
-            if (count > 0) {
-                for (var index = 0; index < count; ++index) {
-                    var item = r['Collection'][index];
-                    if (typeof item === 'object' && typeof item['CurrentPlayers'] === 'object' && isLoading) {
-                        var idx, cnt;
-                        for (idx = 0, cnt = item['CurrentPlayers'].length; idx < cnt; ++idx) {
-                            var player = item['CurrentPlayers'][idx];
-                            if (typeof player['Thumbnail'] === 'object' && player['Thumbnail']['Url'] === avatar && isLoading) {
-                                return callback(true, item);
-                            }
-                        }
-                    }
-                }
-                console.log(startIndex);
-                return findServer(avatar, userId, callback, startIndex + count);
-            }
-
-            callback(false, null);
-        })
-        .catch(exc => {
-            console.error(exc);
-            isLoading = false;
-            addonError('Error occured during callback!');
-        });
+function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
 }
 
+const findServer = async(userId, avatar, placeID, total, offset, callback) => {
+    const percentage = Math.round((offset / total) * 100);
+    const bar = document.getElementById('bar');
+    bar.style.width = `${percentage}%`;
+    if (total <= offset) return { error: true, api: false, percentage };
+    const urls = Array.from({ length: REQUEST_LIMIT }, (_, i) => `www.roblox.com/games/getgameinstancesjson?placeId=${placeID}&startIndex=${i * 10 + offset}`);
+    const data = await Promise.all(urls.map(url => request(url, { retry: RETRY_LIMIT })));
+    if (percentage >= 100) {
+        return { error: true, api: true, percentage };
+    }
+    if (!data[0].Collection.length) {
+        await sleep(4000)
+        return findServer(userId, avatar, placeID, total, offset, callback)
+    }
+
+    const found = data
+        .flatMap(group => group.Collection)
+        .find(server => server.CurrentPlayers
+            .find(player => player.Id === userId || player.Thumbnail.Url === avatar));
+    if (!found) return findServer(userId, avatar, placeID, data[0].TotalCollectionSize, offset + REQUEST_LIMIT * 10, callback);
+    return found;
+};
 
 function clearAddonServerContainer() {
     var thing = document.getElementById('rbx-addon-server-search');
@@ -256,9 +262,9 @@ function loadingAddonServerContainer(i) {
         loading.remove();
 
     if (i === true) {
-        var spinner = document.createElement('span');
-        spinner.className = "spinner spinner-default";
-        spinner.id = 'rbx-addon-loading';
+        var spinner = document.createElement('div');
+        spinner.className = "bar";
+        spinner.id = 'bar';
         thing.appendChild(spinner);
     }
 }
@@ -337,6 +343,7 @@ function createInput(node) {
     });
     input.addEventListener('keydown', (e) => {
         if (e.which == 13 && input.value.trim() !== "") {
+            if (isLoading) return
             onSubmit(input.value, true);
         }
     });
