@@ -178,10 +178,6 @@ function getAvatar(userId, callback) {
 }
 
 function getPlaceId() {
-    let playButton = document.getElementById("rbx-private-servers");
-    if (playButton)
-        return playButton.getAttribute("data-placeid");
-
     let urlMatch = document.location.href.match(/games\/(\d+)\//);
     if (urlMatch && !Number.isNaN(Number(urlMatch[1])))
         return urlMatch[1];
@@ -214,12 +210,13 @@ function findServer(avatar, userId, callback, startIndex = 0) {
                         }
                     }
                 }
+                console.log(startIndex);
                 return findServer(avatar, userId, callback, startIndex + count);
             }
 
             callback(false, null);
         })
-        .catch(ex => {
+        .catch(exc => {
             console.error(exc);
             isLoading = false;
             addonError('Error occured during callback!');
