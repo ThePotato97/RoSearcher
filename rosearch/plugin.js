@@ -75,7 +75,7 @@ const onSubmit = async(user, isUsername) => {
             addonError('Error occurred while fetching avatar');
         });
     } else {
-        getUserOnlineStatus(id).then(_ => {
+        getUserOnlineStatus(user).then(_ => {
             getAvatar(user, cb)
         })
     }
