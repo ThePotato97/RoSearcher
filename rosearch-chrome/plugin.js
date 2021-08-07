@@ -4,7 +4,8 @@ const RETRY_LIMIT = 100;
 let runningGames = document.getElementById("rbx-running-games");
 let currentInput = "";
 let isLoading = false;
-const Roblox = window.Roblox;
+
+console.log(Roblox)
 
 function getCurrentUser() {
     let element = document.getElementsByName("user-data")[0];
@@ -137,12 +138,7 @@ function displayServer(server) {
     sectionJoin.href = '#';
     sectionJoin.setAttribute('data-placeid', getPlaceId());
     sectionJoin.onclick = (e) => {
-        var script = document.createElement('script');
-        var obj = (document.body || document.head || document.documentElement);
-        script.id = 'tmpScript';
-        script.type = 'text/javascript';
-        script.innerHTML = server.JoinScript + `;document.currentScript.remove();`;
-        obj.appendChild(script);
+        window.Roblox.GameLauncher.joinGameInstance(server.placeID, server.Guid)
     };
     sectionJoin.innerText = 'Join';
     //sectionRight stuff
@@ -171,13 +167,28 @@ function displayServer(server) {
 
 function getUserOnlineStatus(userId) {
     return new Promise((res, rej) => {
-        request(`cors.bridged.cc/https://api.roblox.com/users/${userId}/onlinestatus/?${Math.random()}`).then(statusResponse => {
-            if (statusResponse.IsOnline) {
-                res(userId);
-            } else {
-                addonError('User is offline');
-                throw new Error('User is offline')
+        request('presence.roblox.com/v1/presence/users', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+
+            },
+            credentials: "include",
+            body: JSON.stringify({ userIds: [userId] }),
+        }).then(response => {
+            const { userPresences: [presence] } = response;
+            console.log(presence)
+            if (!presence.userPresenceType || presence.userPresenceType !== 2) {
+                const errorType = (`User is ${!presence.userPresenceType ? 'offline' : 'not playing a game'}!`);
+                addonError(errorType);
+                throw new Error(errorType)
             }
+            if (presence.placeId && presence.gameId) {
+                addonError("User has joins on, skipping search.");
+                window.Roblox.GameLauncher.joinGameInstance(presence.placeId, presence.gameId)
+                throw new Error("User has joins on")
+            }
+            //res(userId)
         }).catch(e => {
             console.log(e)
             isLoading = false;

@@ -1,0 +1,22 @@
+{
+    "name": "RoSearcher",
+    "version": "1.6.1",
+    "manifest_version": 2,
+    "description": "Search through the game servers for a player!",
+    "icons": {
+        "128": "icon.png"
+    },
+    "permissions": [
+        "*://*.roblox.com/*",
+        "*://*.rbxcdn.com/*"
+    ],
+    "web_accessible_resources": [
+        "plugin.js"
+    ],
+    "content_scripts": [{
+        "matches": ["*://*.roblox.com/*"],
+        "run_at": "document_end",
+        "css": ["styles.css"],
+        "js": ["inject.js"]
+    }]
+}

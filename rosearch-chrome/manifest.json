@@ -10,10 +10,14 @@
         "*://*.roblox.com/*",
         "*://*.rbxcdn.com/*"
     ],
+    "web_accessible_resources": [{
+        "resources": ["plugin.js"],
+        "matches": ["*://*.roblox.com/*"]
+    }],
     "content_scripts": [{
-        "matches": ["*://*.roblox.com/games/*"],
+        "matches": ["*://*.roblox.com/*"],
         "run_at": "document_end",
         "css": ["styles.css"],
-        "js": ["plugin.js"]
+        "js": ["inject.js"]
     }]
 }
