@@ -138,7 +138,6 @@ function displayServer(server) {
     sectionJoin.href = '#';
     sectionJoin.setAttribute('data-placeid', getPlaceId());
     sectionJoin.onclick = (e) => {
-        console.log(window)
         window.Roblox.GameLauncher.joinGameInstance(server.placeID, server.Guid)
     };
     sectionJoin.innerText = 'Join';
@@ -172,22 +171,24 @@ function getUserOnlineStatus(userId) {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
+
             },
+            credentials: "include",
             body: JSON.stringify({ userIds: [userId] }),
         }).then(response => {
             const { userPresences: [presence] } = response;
+            console.log(presence)
             if (!presence.userPresenceType || presence.userPresenceType !== 2) {
-                console.log(presence)
                 const errorType = (`User is ${!presence.userPresenceType ? 'offline' : 'not playing a game'}!`);
                 addonError(errorType);
                 throw new Error(errorType)
             }
             if (presence.placeId && presence.gameId) {
-                res(UserId)
-            } else {
-                addonError("Unknown error occurred: 1");
-                throw new Error("Unknown error occurred: 1")
+                addonError("User has joins on, skipping search.");
+                window.Roblox.GameLauncher.joinGameInstance(presence.placeId, presence.gameId)
+                throw new Error("User has joins on")
             }
+            //res(userId)
         }).catch(e => {
             console.log(e)
             isLoading = false;
