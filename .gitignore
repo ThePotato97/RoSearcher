@@ -1,1 +1,5 @@
 *.zip
+*.pem
+*.crx
+*.xpi
+web-ext-artifacts
