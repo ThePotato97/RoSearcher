@@ -241,7 +241,7 @@ function sleep(ms) {
 }
 
 const findServer = async(userId, avatar, placeID, total, offset, failAmount = 0) => {
-    const percentage = Math.round((offset / total) * 100);
+    const percentage = Math.clamp(Math.round((offset / total) * 100), 0, 100);
     const bar = document.getElementById('bar');
     bar.style.width = `${percentage}%`;
     if (total <= offset) return { error: true, api: false, percentage };
