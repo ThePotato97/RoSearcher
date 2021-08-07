@@ -11,12 +11,12 @@
         "*://*.rbxcdn.com/*"
     ],
     "web_accessible_resources": [
-        "plugin.js"
+        "/js/plugin.js"
     ],
     "content_scripts": [{
         "matches": ["*://*.roblox.com/*"],
         "run_at": "document_end",
-        "css": ["styles.css"],
-        "js": ["inject.js"]
+        "css": ["/css/styles.css"],
+        "js": ["/js/inject.js"]
     }]
 }

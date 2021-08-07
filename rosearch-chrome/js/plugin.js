@@ -5,8 +5,6 @@ let runningGames = document.getElementById("rbx-running-games");
 let currentInput = "";
 let isLoading = false;
 
-console.log(Roblox)
-
 function getCurrentUser() {
     let element = document.getElementsByName("user-data")[0];
     if (element) {
@@ -177,7 +175,6 @@ function getUserOnlineStatus(userId) {
             body: JSON.stringify({ userIds: [userId] }),
         }).then(response => {
             const { userPresences: [presence] } = response;
-            console.log(presence)
             if (!presence.userPresenceType || presence.userPresenceType !== 2) {
                 const errorType = (`User is ${!presence.userPresenceType ? 'offline' : 'not playing a game'}!`);
                 addonError(errorType);

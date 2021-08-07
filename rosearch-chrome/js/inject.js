@@ -12,4 +12,4 @@ function injectScript(file_path, tag) {
     script.setAttribute('src', file_path);
     node.appendChild(script);
 }
-injectScript(chrome.runtime.getURL('plugin.js'), 'body');
+injectScript(chrome.runtime.getURL('/js/plugin.js'), 'body');
