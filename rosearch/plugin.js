@@ -15,16 +15,23 @@ function getCurrentUser() {
     return [];
 }
 
+
 const request = async(url, options = {}) => {
     const { retry } = options;
     try {
-        return await fetch(`https://${url}`, options).then(r => r.json());
+        const response = await fetch(`https://${url}`, options);
+        const contentType = response.headers.get("content-type");
+        if (contentType && contentType.indexOf("application/json") !== -1) {
+            return await response.json()
+        } else {
+            throw new Error("not json")
+        }
     } catch (e) {
-        console.log(e)
         if (!retry || retry === 1) throw e;
         return request(url, {...options, retry: retry - 1 });
     }
 };
+
 const onSubmit = async(user, isUsername) => {
     if (isLoading) return
     addonError(null);
@@ -38,7 +45,6 @@ const onSubmit = async(user, isUsername) => {
                 const { TotalCollectionSize: total } = response
                 console.log(`%c[Server Searcher] User avatar ${r.url}`, "color: #424242; font-size:16px;");
                 findServer(user, r.url, placeId, total, 0).then((server) => {
-                    console.log(server)
                     isLoading = false;
 
                     if (!server.error) {
@@ -61,13 +67,17 @@ const onSubmit = async(user, isUsername) => {
 
     if (isUsername) {
         getUserIdFromName(user).then(id => {
-            getAvatar(id, cb);
+            getUserOnlineStatus(id).then(_ => {
+                getAvatar(id, cb)
+            })
         }).catch(e => {
             isLoading = false;
             addonError('Error occurred while fetching avatar');
         });
     } else {
-        getAvatar(user, cb);
+        getUserOnlineStatus(id).then(_ => {
+            getAvatar(user, cb)
+        })
     }
 }
 
@@ -158,25 +168,36 @@ function displayServer(server) {
     container.appendChild(li);
 }
 
+
+function getUserOnlineStatus(userId) {
+    return new Promise((res, rej) => {
+        request(`cors.bridged.cc/https://api.roblox.com/users/${userId}/onlinestatus/?${Math.random()}`).then(statusResponse => {
+            if (statusResponse.IsOnline) {
+                res(userId);
+            } else {
+                addonError('User is offline');
+                throw new Error('User is offline')
+            }
+        }).catch(e => {
+            console.log(e)
+            isLoading = false;
+        })
+    });
+}
+
 function getUserIdFromName(name) {
     return new Promise((res, rej) => {
-        fetch(`https://www.roblox.com/users/profile?username=${name}`)
-            .then(r => {
-                if (!r.ok) throw new Error('Invalid response');
-                return r.url.match(/\d+/)[0];
-            })
-            .then(id => {
-                let data = getCurrentUser();
-                if (name.toLowerCase() != data[1] && id.toString() == data[0]) {
-                    isLoading = false;
-                    addonError('Error occurred while fetching username: username does not exist');
+        request(`api.roblox.com/users/get-by-username?username=${name}`)
+            .then(response => {
+                if (response.success || response.success == undefined) {
+                    res(response.Id);
                 } else {
-                    res(id);
+                    addonError(response.errorMessage);
+                    throw new Error(response.errorMessage)
                 }
             }).catch(e => {
-                console.error(e);
+                console.log(e)
                 isLoading = false;
-                addonError('Error occurred while fetching username!');
             })
     });
 }
@@ -208,29 +229,23 @@ function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-let amount = 0
-const findServer = async(userId, avatar, placeID, total, offset, callback) => {
+const findServer = async(userId, avatar, placeID, total, offset, failAmount = 0) => {
     const percentage = Math.round((offset / total) * 100);
     const bar = document.getElementById('bar');
     bar.style.width = `${percentage}%`;
     if (total <= offset) return { error: true, api: false, percentage };
     const urls = Array.from({ length: REQUEST_LIMIT }, (_, i) => `www.roblox.com/games/getgameinstancesjson?placeId=${placeID}&startIndex=${i * 10 + offset}`);
     const data = await Promise.all(urls.map(url => request(url, { retry: RETRY_LIMIT })));
-    if (percentage >= 100) {
-        return { error: true, api: true, percentage };
-    }
-    if (!data[0].Collection.length) {
-        await sleep(4000)
-        return findServer(userId, avatar, placeID, total, offset, callback)
-    }
-
     const found = data
         .flatMap(group => group.Collection)
         .find(server => server.CurrentPlayers
             .find(player => player.Id === userId || player.Thumbnail.Url === avatar));
-    if (!found) return findServer(userId, avatar, placeID, data[0].TotalCollectionSize, offset + REQUEST_LIMIT * 10, callback);
+    if (total == offset) {
+        return { error: true, api: true, percentage };
+    }
 
-    console.log(found)
+    await sleep(200)
+    if (!found) return findServer(userId, avatar, placeID, data[0].TotalCollectionSize, offset + REQUEST_LIMIT * 10, failAmount);
     return found;
 };
 
