@@ -1,6 +1,6 @@
 {
     "name": "RoSearcher",
-    "version": "1.6.1",
+    "version": "1.7",
     "manifest_version": 2,
     "description": "Search through the game servers for a player!",
     "icons": {
