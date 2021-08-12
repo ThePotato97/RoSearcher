@@ -237,8 +237,12 @@ function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
+function clamp(number, min, max) {
+    return Math.max(min, Math.min(number, max));
+}
+
 const findServer = async(userId, avatar, placeID, total, offset, failAmount = 0) => {
-    const percentage = Math.clamp(Math.round((offset / total) * 100), 0, 100);
+    const percentage = clamp(Math.round((offset / total) * 100), 0, 100);
     const bar = document.getElementById('bar');
     bar.style.width = `${percentage}%`;
     if (total <= offset) return { error: true, api: false, percentage };
