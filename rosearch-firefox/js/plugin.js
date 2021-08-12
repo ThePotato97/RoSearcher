@@ -185,7 +185,8 @@ function getUserOnlineStatus(userId) {
                 window.Roblox.GameLauncher.joinGameInstance(presence.placeId, presence.gameId)
                 throw new Error("User has joins on")
             }
-            //res(userId)
+            console.log('done', userId)
+            res(userId)
         }).catch(e => {
             console.log(e)
             isLoading = false;
