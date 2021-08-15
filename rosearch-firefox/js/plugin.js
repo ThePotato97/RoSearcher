@@ -174,6 +174,11 @@ function getUserOnlineStatus(userId) {
             credentials: "include",
             body: JSON.stringify({ userIds: [userId] }),
         }).then(response => {
+            if (response.errors) {
+                const { errors: [errors] } = response;
+                addonError(errors.message)
+                throw new Error(errors.message)
+            }
             const { userPresences: [presence] } = response;
             if (!presence.userPresenceType || presence.userPresenceType !== 2) {
                 const errorType = (`User is ${!presence.userPresenceType ? 'offline' : 'not playing a game'}!`);
