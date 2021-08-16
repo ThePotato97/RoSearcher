@@ -372,6 +372,10 @@ function createInput(node) {
     idbutton.innerHTML = "UserId";
     idbutton.className = "btn-secondary-md idsubmit"
 
+    input.addEventListener('paste', (e) => {
+        onNewInput(e.clipboardData.getData('Text'));
+    });
+
     input.addEventListener('keyup', (e) => {
         if (e.which !== 13) {
 
