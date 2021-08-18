@@ -136,7 +136,7 @@ function displayServer(server) {
     sectionJoin.href = '#';
     sectionJoin.setAttribute('data-placeid', getPlaceId());
     sectionJoin.onclick = (e) => {
-        window.Roblox.GameLauncher.joinGameInstance(server.placeID, server.Guid)
+        window.Roblox.GameLauncher.joinGameInstance(server.PlaceId, server.Guid)
     };
     sectionJoin.innerText = 'Join';
     //sectionRight stuff
