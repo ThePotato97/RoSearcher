@@ -3,7 +3,7 @@ align="center">
 <sub
 >
 <img  
-src="https://raw.githubusercontent.com/ThePotato97/RoSearcher/master/rosearch-chrome/icon.png" height="38" width="38">
+src="https://raw.githubusercontent.com/ThePotato97/RoSearcher/master/assets/iconx64.png" height="38" width="38">
 </sub>
 RoSearcher
 </h1>
