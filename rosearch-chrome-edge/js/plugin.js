@@ -4,7 +4,7 @@ const RETRY_LIMIT = 100;
 let runningGames = document.getElementById("rbx-running-games");
 let currentInput = "";
 let isLoading = false;
-
+let bar = undefined;
 function getCurrentUser() {
     let element = document.getElementsByName("user-data")[0];
     if (element) {
@@ -110,18 +110,18 @@ function displayServer(server) {
     addonGameServerContainerHasItems(true);
     clearAddonServerContainer();
 
-    var container = document.getElementById('rbx-addon-server-search');
+    let container = document.getElementById('rbx-addon-server-search');
     if (container === null) throw new Error('Could not find rbx-addon-search container!');
 
     // creating elements
-    var li = document.createElement('li');
-    var sectionHeader = document.createElement('div');
+    let li = document.createElement('li');
+    let sectionHeader = document.createElement('div');
     // section left content
-    var sectionLeft = document.createElement('div');
-    var sectionStatus = document.createElement('div');
-    var sectionJoin = document.createElement('a');
+    let sectionLeft = document.createElement('div');
+    let sectionStatus = document.createElement('div');
+    let sectionJoin = document.createElement('a');
     // section right content
-    var sectionRight = document.createElement('div');
+    let sectionRight = document.createElement('div');
 
 
     // set element data
@@ -142,9 +142,9 @@ function displayServer(server) {
     //sectionRight stuff
     sectionRight.className = 'section-right rbx-game-server-players';
     server.CurrentPlayers.forEach((val, idx) => {
-        var span = document.createElement('span');
-        var link = document.createElement('a');
-        var img = document.createElement('img');
+        let span = document.createElement('span');
+        let link = document.createElement('a');
+        let img = document.createElement('img');
         span.className = 'avatar avatar-headshot-sm player-avatar';
         link.className = 'avatar-card-link';
         img.className = 'avatar-card-image';
@@ -248,7 +248,6 @@ function clamp(number, min, max) {
 
 const findServer = async(userId, avatar, placeID, total, offset, failAmount = 0) => {
     const percentage = clamp(Math.round((offset / total) * 100), 0, 100);
-    const bar = document.getElementById('bar');
     bar.style.width = `${percentage}%`;
     if (total <= offset) return { error: true, api: false, percentage };
     const urls = Array.from({ length: REQUEST_LIMIT }, (_, i) => `www.roblox.com/games/getgameinstancesjson?placeId=${placeID}&startIndex=${i * 10 + offset}`);
@@ -267,7 +266,7 @@ const findServer = async(userId, avatar, placeID, total, offset, failAmount = 0)
 };
 
 function clearAddonServerContainer() {
-    var thing = document.getElementById('rbx-addon-server-search');
+    let thing = document.getElementById('rbx-addon-server-search');
     if (thing === null) return;
     while (thing.firstChild) {
         thing.removeChild(thing.firstChild);
@@ -276,12 +275,12 @@ function clearAddonServerContainer() {
 
 function addonError(err) {
     loadingAddonServerContainer(false);
-    var thing = document.getElementById('rbx-addon-server-search');
-    var msg = document.getElementById('rbx-addon-search-err');
+    let thing = document.getElementById('rbx-addon-server-search');
+    let msg = document.getElementById('rbx-addon-search-err');
     if (msg !== null) msg.remove();
     if (typeof err === 'string') {
         addonGameServerContainerHasItems(false);
-        var p = document.createElement('p');
+        let p = document.createElement('p');
         p.className = 'no-servers-message';
         p.id = 'rbx-addon-search-err';
         p.innerText = err;
@@ -290,25 +289,25 @@ function addonError(err) {
 }
 
 function loadingAddonServerContainer(i) {
-    var thing = document.getElementById('rbx-addon-server-search');
+    let thing = document.getElementById('rbx-addon-server-search');
     if (thing === null) throw new Error('Could not find addon server container!');
 
-    var loading = document.getElementById('rbx-addon-loading');
+    let loading = document.getElementById('rbx-addon-loading');
     if (loading !== null)
         loading.remove();
 
     if (i === true) {
-        var spinner = document.createElement('div');
-        spinner.className = "bar";
-        spinner.id = 'bar';
-        thing.appendChild(spinner);
+        bar = document.createElement('div');
+        bar.className = "bar";
+        bar.id = 'bar';
+        thing.appendChild(bar);
     }
 }
 
 function displayAddonServerContainer(i) {
-    var thing = document.getElementById('rbx-addon-server-search');
-    var rbxSrvCont = document.getElementById('rbx-game-server-item-container');
-    var loadMore = document.getElementsByClassName('rbx-running-games-footer');
+    let thing = document.getElementById('rbx-addon-server-search');
+    let rbxSrvCont = document.getElementById('rbx-game-server-item-container');
+    let loadMore = document.getElementsByClassName('rbx-running-games-footer');
     if (rbxSrvCont === null) throw new Error('could not find server container');
 
     if (thing === null) {
@@ -330,7 +329,7 @@ function displayAddonServerContainer(i) {
 }
 
 function addonGameServerContainerHasItems(i) {
-    var thing = document.getElementById('rbx-addon-server-search');
+    let thing = document.getElementById('rbx-addon-server-search');
     if (thing === null) throw new Error('Could not find server container!');
 
     if (i === true) {
@@ -341,10 +340,10 @@ function addonGameServerContainerHasItems(i) {
 }
 
 function createGameServerContainer() {
-    var rbxSrvCont = document.getElementById('rbx-game-server-item-container');
+    let rbxSrvCont = document.getElementById('rbx-game-server-item-container');
     if (rbxSrvCont === null) throw new Error('Could not find server container!');
 
-    var newNode = rbxSrvCont.cloneNode(false);
+    let newNode = rbxSrvCont.cloneNode(false);
     newNode.id = "rbx-addon-server-search"
 
     rbxSrvCont.parentNode.appendChild(newNode);
@@ -353,9 +352,9 @@ function createGameServerContainer() {
 }
 
 function createInput(node) {
-    var container = document.createElement('div');
-    var input = document.createElement('input');
-    var namebutton = document.createElement("button");
+    let container = document.createElement('div');
+    let input = document.createElement('input');
+    let namebutton = document.createElement("button");
 
     input.className = "addMainInput";
     input.placeholder = "Username / User ID";
@@ -368,7 +367,7 @@ function createInput(node) {
     namebutton.style.padding = "3px";
     namebutton.disabled = true;
 
-    var idbutton = namebutton.cloneNode();
+    let idbutton = namebutton.cloneNode();
     idbutton.innerHTML = "UserId";
     idbutton.className = "btn-secondary-md idsubmit"
 
