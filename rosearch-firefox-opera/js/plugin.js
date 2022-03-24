@@ -3,8 +3,12 @@ const RETRY_LIMIT = 100;
 
 let runningGames = document.getElementById("rbx-running-games");
 let currentInput = "";
+const isBTR = document.querySelector("body[data-btr-page]") !== null;
 let isLoading = false;
 let bar = undefined;
+
+let container
+
 function getCurrentUser() {
     let element = document.getElementsByName("user-data")[0];
     if (element) {
@@ -15,7 +19,7 @@ function getCurrentUser() {
 }
 
 
-const request = async(url, options = {}) => {
+const request = async (url, options = {}) => {
     const { retry } = options;
     try {
         const response = await fetch(`https://${url}`, options);
@@ -27,11 +31,11 @@ const request = async(url, options = {}) => {
         }
     } catch (e) {
         if (!retry || retry === 1) throw e;
-        return request(url, {...options, retry: retry - 1 });
+        return request(url, { ...options, retry: retry - 1 });
     }
 };
 
-const onSubmit = async(user, isUsername) => {
+const onSubmit = async (user, isUsername) => {
     if (isLoading) return
     addonError(null);
     addonGameServerContainerHasItems(false);
@@ -246,7 +250,7 @@ function clamp(number, min, max) {
     return Math.max(min, Math.min(number, max));
 }
 
-const findServer = async(userId, avatar, placeID, total, offset, failAmount = 0) => {
+const findServer = async (userId, avatar, placeID, total, offset, failAmount = 0) => {
     const percentage = clamp(Math.round((offset / total) * 100), 0, 100);
     bar.style.width = `${percentage}%`;
     if (total <= offset) return { error: true, api: false, percentage };
@@ -351,8 +355,24 @@ function createGameServerContainer() {
     addonGameServerContainerHasItems(false);
 }
 
+function onRemove(el, callback) {
+    new MutationObserver((mutations, observer) => {
+        if (!document.body.contains(el)) {
+            observer.disconnect();
+            callback();
+        }
+    }).observe(document.body, { childList: true });
+}
+
 function createInput(node) {
-    let container = document.createElement('div');
+    if (!node) {
+        return
+    }
+    if (!!container) {
+        node.appendChild(container);
+        return;
+    }
+    container = document.createElement('div');
     let input = document.createElement('input');
     let namebutton = document.createElement("button");
 
@@ -398,11 +418,42 @@ function createInput(node) {
     container.appendChild(namebutton);
     container.appendChild(idbutton);
     node.appendChild(container);
+
+    if (isBTR) {
+        console.log("BTR mitigation active")
+        setInterval(function () {
+            const running = document.getElementById("rbx-running-games");
+            if (running) {
+                const firstChild = running.firstElementChild;
+                console.log(firstChild)
+                firstChild.appendChild(container);
+            }
+        }, 1000);
+    }
 }
 
+console.log("ROSEARCHER LOADED")
+if (runningGames === null) {
+    let observer = new MutationObserver((mutations) => {
+        mutations.forEach((mutation) => {
+            console.log("mutation", mutation)
+            if (!mutation.addedNodes) return
+            for (let i = 0; i < mutation.addedNodes.length; i++) {
+                let node = mutation.addedNodes[i]
+                if (node.id == "rbx-running-games") {
+                    console.log("mutation", mutation.addedNodes);
+                    createInput(node.firstElementChild);
+                }
+            }
+        })
+    })
 
-
-if (runningGames !== null) {
-    console.log("%cServer Searcher has LOADED!", "color: #424242; font-size:16px;");
+    observer.observe(document.body, {
+        childList: true
+        , subtree: true
+        , attributes: false
+        , characterData: false
+    })
+} else {
     createInput(runningGames.firstElementChild);
 }
