@@ -425,10 +425,13 @@ function createInput(node) {
             const running = document.getElementById("rbx-running-games");
             if (running) {
                 const firstChild = running.firstElementChild;
-                console.log(firstChild)
+                const focused = document.activeElement === input
                 firstChild.appendChild(container);
+                if (focused) {
+                    input.focus();
+                }
             }
-        }, 1000);
+        }, 50);
     }
 }
 
@@ -441,7 +444,6 @@ if (runningGames === null) {
             for (let i = 0; i < mutation.addedNodes.length; i++) {
                 let node = mutation.addedNodes[i]
                 if (node.id == "rbx-running-games") {
-                    console.log("mutation", mutation.addedNodes);
                     createInput(node.firstElementChild);
                 }
             }
