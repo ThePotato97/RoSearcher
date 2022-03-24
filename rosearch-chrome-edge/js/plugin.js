@@ -3,8 +3,12 @@ const RETRY_LIMIT = 100;
 
 let runningGames = document.getElementById("rbx-running-games");
 let currentInput = "";
+const isBTR = document.querySelector("body[data-btr-page]") !== null;
 let isLoading = false;
 let bar = undefined;
+
+let container
+
 function getCurrentUser() {
     let element = document.getElementsByName("user-data")[0];
     if (element) {
@@ -351,8 +355,24 @@ function createGameServerContainer() {
     addonGameServerContainerHasItems(false);
 }
 
+function onRemove(el, callback) {
+    new MutationObserver((mutations, observer) => {
+        if (!document.body.contains(el)) {
+            observer.disconnect();
+            callback();
+        }
+    }).observe(document.body, { childList: true });
+}
+
 function createInput(node) {
-    let container = document.createElement('div');
+    if (!node) {
+        return
+    }
+    if (!!container) {
+        node.appendChild(container);
+        return;
+    }
+    container = document.createElement('div');
     let input = document.createElement('input');
     let namebutton = document.createElement("button");
 
@@ -398,11 +418,24 @@ function createInput(node) {
     container.appendChild(namebutton);
     container.appendChild(idbutton);
     node.appendChild(container);
+
+    if (isBTR) {
+        console.log("BTR mitigation active")
+        setInterval(function () {
+            const running = document.getElementById("rbx-running-games");
+            if (running) {
+                const firstChild = running.firstElementChild;
+                console.log(firstChild)
+                firstChild.appendChild(container);
+            }
+        }, 1000);
+    }
 }
 
 if (runningGames === null) {
     let observer = new MutationObserver((mutations) => {
         mutations.forEach((mutation) => {
+            console.log("mutation", mutation)
             if (!mutation.addedNodes) return
             for (let i = 0; i < mutation.addedNodes.length; i++) {
                 let node = mutation.addedNodes[i]
