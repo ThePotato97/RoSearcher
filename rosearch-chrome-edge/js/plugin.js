@@ -425,13 +425,17 @@ function createInput(node) {
             const running = document.getElementById("rbx-running-games");
             if (running) {
                 const firstChild = running.firstElementChild;
-                console.log(firstChild)
+                const focused = document.activeElement === input
                 firstChild.appendChild(container);
+                if (focused) {
+                    input.focus();
+                }
             }
-        }, 1000);
+        }, 50);
     }
 }
 
+console.log("ROSEARCHER LOADED")
 if (runningGames === null) {
     let observer = new MutationObserver((mutations) => {
         mutations.forEach((mutation) => {
