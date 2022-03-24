@@ -1,6 +1,6 @@
 {
   "name": "RoSearcher",
-  "version": "1.7.7",
+  "version": "1.7.8",
   "manifest_version": 3,
   "description": "Search through the game servers for a player!",
   "icons": {
@@ -10,12 +10,12 @@
   "web_accessible_resources": [
     {
       "resources": ["/js/plugin.js"],
-      "matches": ["*://*.roblox.com/*"]
+      "matches": ["*://*.roblox.com/games/*"]
     }
   ],
   "content_scripts": [
     {
-      "matches": ["*://*.roblox.com/*"],
+      "matches": ["*://*.roblox.com/games/*"],
       "run_at": "document_idle",
       "css": ["/css/styles.css"],
       "js": ["/js/inject.js"]
