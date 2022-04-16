@@ -9,7 +9,7 @@
   "host_permissions": ["*://*.roblox.com/*", "*://*.rbxcdn.com/*"],
   "web_accessible_resources": [
     {
-      "resources": ["/js/plugin.js"],
+      "resources": ["/js/plugin.js", "/lib/bottleneck.js"],
       "matches": ["*://*.roblox.com/*"]
     }
   ],

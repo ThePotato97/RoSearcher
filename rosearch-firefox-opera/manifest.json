@@ -7,7 +7,7 @@
     "128": "icon.png"
   },
   "permissions": ["*://*.roblox.com/*", "*://*.rbxcdn.com/*"],
-  "web_accessible_resources": ["/js/plugin.js"],
+  "web_accessible_resources": ["/js/plugin.js", "/lib/bottleneck.js"],
   "content_scripts": [
     {
       "matches": ["*://*.roblox.com/games/*"],
