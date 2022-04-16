@@ -1,22 +1,22 @@
-const REQUEST_LIMIT = 40;
+import Bottleneck from '/lib/bottleneck.js';
+
 const RETRY_LIMIT = 100;
 
 let runningGames = document.getElementById("rbx-running-games");
-let currentInput = "";
 const isBTR = document.querySelector("body[data-btr-page]") !== null;
 let isLoading = false;
-let bar = undefined;
 
 let container
 
-function getCurrentUser() {
-    let element = document.getElementsByName("user-data")[0];
-    if (element) {
-        return [element.getAttribute("data-userid"), element.getAttribute("data-name").toLowerCase()];
-    }
+const avatarFetchLimiter = new Bottleneck({
+    maxConcurrent: 5,
+    minTime: 100
+});
 
-    return [];
-}
+const serverFetchLimiter = new Bottleneck({
+    maxConcurrent: 5,
+    minTime: 100
+});
 
 
 const request = async (url, options = {}) => {
@@ -25,62 +25,51 @@ const request = async (url, options = {}) => {
         const response = await fetch(`https://${url}`, options);
         const contentType = response.headers.get("content-type");
         if (contentType && contentType.indexOf("application/json") !== -1) {
-            return await response.json()
+            const json = await response.json()
+            if (!json.errors) {
+                return json;
+            } else {
+                throw json.errors[0].message
+            }
         } else {
-            throw new Error("not json")
+            console.log("notjson", response)
+            throw "not json"
         }
     } catch (e) {
         if (!retry || retry === 1) throw e;
+        await sleep(1000);
         return request(url, { ...options, retry: retry - 1 });
     }
 };
 
 const onSubmit = async (user, isUsername) => {
     if (isLoading) return
-    addonError(null);
+    addonMessage(null);
     addonGameServerContainerHasItems(false);
     clearAddonServerContainer();
-    loadingAddonServerContainer(true);
-    let cb = (r) => {
-        if (r.ok) {
-            const placeId = getPlaceId();
-            request(`www.roblox.com/games/getgameinstancesjson?placeId=${placeId}&startIndex=999999999`).then((response) => {
-                const { TotalCollectionSize: total } = response
-                console.log(`%c[Server Searcher] User avatar ${r.url}`, "color: #424242; font-size:16px;");
-                findServer(user, r.url, placeId, total, 0).then((server) => {
-                    isLoading = false;
-
-                    if (!server.error) {
-                        console.log(`%c[Server Searcher] User found! ${JSON.stringify(server)}`, "color: #424242; font-size:16px;");
-                        displayServer(server)
-                    } else {
-                        console.log(`%c[Server Searcher] Couldn't find user`, "color: #424242; font-size:16px;");
-                        addonError('Could not find user in server!');
-                    }
-                })
-            })
-        } else {
-            isLoading = false;
-            console.log(`%c[Server Searcher] Couldn't get user avatar`, "color: #424242; font-size:16px;");
-            addonError('Could not find user!');
-        }
-    }
-
+    loadingAddonServerContainer();
+    const userId = isUsername ? await getUserIdFromName(user) : user;
+    await getUserOnlineStatus(userId);
+    const avatar = await getAvatar(userId);
+    const placeId = await new Promise((resolve, reject) => { resolve(getPlaceId()) });
     isLoading = true;
+    if (avatar) {
+        console.log(`%c[Server Searcher] User avatar ${avatar.url}`, "color: #424242; font-size:16px;");
 
-    if (isUsername) {
-        getUserIdFromName(user).then(id => {
-            getUserOnlineStatus(id).then(_ => {
-                getAvatar(id, cb)
-            })
-        }).catch(e => {
+        const server = await getServerFromThumbnail(avatar.url, placeId)
+        if (server) {
+            console.log(`%c[Server Searcher] User found! ${JSON.stringify(server)}`, "color: #424242; font-size:16px;");
+            displayServer(server);
             isLoading = false;
-            addonError('Error occurred while fetching avatar');
-        });
+        } else {
+            console.log(`%c[Server Searcher] Couldn't find user`, "color: #424242; font-size:16px;");
+            addonMessage('Could not find user in server!');
+            isLoading = false;
+        }
     } else {
-        getUserOnlineStatus(user).then(_ => {
-            getAvatar(user, cb)
-        })
+        isLoading = false;
+        console.log(`%c[Server Searcher] Couldn't get user avatar`, "color: #424242; font-size:16px;");
+        addonMessage('Error occurred while fetching avatar');
     }
 }
 
@@ -109,8 +98,8 @@ function onNewInput(input) {
 }
 
 function displayServer(server) {
-    loadingAddonServerContainer(false);
-    addonError(null);
+    loadingAddonServerContainer();
+    addonMessage(null);
     addonGameServerContainerHasItems(true);
     clearAddonServerContainer();
 
@@ -130,29 +119,29 @@ function displayServer(server) {
 
     // set element data
     li.className = 'stack-row rbx-game-server-item';
-    li.setAttribute('data-gameid', server.guid);
+    li.setAttribute('data-gameid', server.id);
     sectionHeader.innerHTML = '<div class="link-menu rbx-game-server-menu"></div>';
     // sectionLeft stuff
     sectionLeft.className = 'section-left rbx-game-server-details';
     sectionStatus.className = 'rbx-game-status rbx-game-server-status';
-    sectionStatus.innerText = server.PlayersCapacity;
+    sectionStatus.innerText = `${server.playing} of ${server.maxPlayers} people max`;
     sectionJoin.className = 'btn-full-width btn-control-xs rbx-game-server-join';
     sectionJoin.href = '#';
     sectionJoin.setAttribute('data-placeid', getPlaceId());
     sectionJoin.onclick = (e) => {
-        window.Roblox.GameLauncher.joinGameInstance(server.PlaceId, server.Guid)
+        window.Roblox.GameLauncher.joinGameInstance(getPlaceId(), server.id)
     };
     sectionJoin.innerText = 'Join';
     //sectionRight stuff
     sectionRight.className = 'section-right rbx-game-server-players';
-    server.CurrentPlayers.forEach((val, idx) => {
+    server.thumbnails.forEach((val, idx) => {
         let span = document.createElement('span');
         let link = document.createElement('a');
         let img = document.createElement('img');
         span.className = 'avatar avatar-headshot-sm player-avatar';
         link.className = 'avatar-card-link';
         img.className = 'avatar-card-image';
-        img.src = val.Thumbnail.Url;
+        img.src = val;
         link.appendChild(img);
         span.appendChild(link);
         sectionRight.appendChild(span);
@@ -173,24 +162,23 @@ function getUserOnlineStatus(userId) {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-
             },
             credentials: "include",
             body: JSON.stringify({ userIds: [userId] }),
         }).then(response => {
             if (response.errors) {
                 const { errors: [errors] } = response;
-                addonError(errors.message)
+                addonMessage(errors.message)
                 throw new Error(errors.message)
             }
             const { userPresences: [presence] } = response;
             if (!presence.userPresenceType || presence.userPresenceType !== 2) {
                 const errorType = (`User is ${!presence.userPresenceType ? 'offline' : 'not playing a game'}!`);
-                addonError(errorType);
+                addonMessage(errorType);
                 throw new Error(errorType)
             }
             if (presence.placeId && presence.gameId) {
-                addonError("User has joins on, skipping search.");
+                addonMessage("User has joins on, skipping search.");
                 window.Roblox.GameLauncher.joinGameInstance(presence.placeId, presence.gameId)
                 throw new Error("User has joins on")
             }
@@ -209,7 +197,7 @@ function getUserIdFromName(name) {
                 if (response.success || response.success == undefined) {
                     res(response.Id);
                 } else {
-                    addonError(response.errorMessage);
+                    addonMessage(response.errorMessage);
                     throw new Error(response.errorMessage)
                 }
             }).catch(e => {
@@ -219,19 +207,19 @@ function getUserIdFromName(name) {
     });
 }
 
-function getAvatar(userId, callback) {
-    if (!isLoading) return;
-
-    fetch(`https://www.roblox.com/headshot-thumbnail/image?userId=${userId}&width=48&height=48&format=png`)
-        .then((v) => {
-            if (isLoading)
-                callback(v, userId);
-        })
-        .catch(exc => {
-            console.error(exc);
-            isLoading = false;
-            addonError('Error occurred during callback!');
-        });
+function getAvatar(userId) {
+    return new Promise((response, reject) => {
+        fetch(`https://www.roblox.com/headshot-thumbnail/image?userId=${userId}&width=48&height=48&format=png`)
+            .then((res) => {
+                response(res);
+            })
+            .catch(exc => {
+                console.error(exc);
+                isLoading = false;
+                addonMessage('Error occurred during callback!');
+                reject(exc);
+            });
+    });
 }
 
 function getPlaceId() {
@@ -239,35 +227,143 @@ function getPlaceId() {
     if (urlMatch && !Number.isNaN(Number(urlMatch[1])))
         return urlMatch[1];
 
-    return addonError('Unable to get place ID!');
+    return addonMessage('Unable to get place ID!');
 }
 
 function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-function clamp(number, min, max) {
-    return Math.max(min, Math.min(number, max));
+const RETRY_TIMES = 5
+
+const getServers = async (placeID, servers, cursor, retry = RETRY_TIMES) => {
+    const requestWrapped = serverFetchLimiter.wrap(request)
+    servers = servers || [];
+    const response = await requestWrapped(`games.roblox.com/v1/games/${placeID}/servers/Public${cursor ? `?cursor=${cursor}` : ''}`, { retry: RETRY_LIMIT });
+    const { nextPageCursor, data } = response;
+    retry--;
+
+    if (nextPageCursor) {
+        await sleep(50);
+        retry = RETRY_TIMES
+        return getServers(placeID, [...servers, ...data], nextPageCursor, retry);
+    } else if (retry > 0 && !nextPageCursor) {
+        await sleep(1000);
+        return getServers(placeID, [...servers, ...data], cursor, retry);
+    };
+
+    return [...servers, ...data];
+};
+
+const generateRequest = async (tokens) => {
+    const requests = []
+    tokens.forEach(token => {
+        requests.push({
+            format: "png",
+            requestId: token,
+            size: "48x48",
+            targetId: 0,
+            token: token,
+            type: "AvatarHeadShot"
+        })
+    })
+    return requests;
 }
 
-const findServer = async (userId, avatar, placeID, total, offset, failAmount = 0) => {
-    const percentage = clamp(Math.round((offset / total) * 100), 0, 100);
-    bar.style.width = `${percentage}%`;
-    if (total <= offset) return { error: true, api: false, percentage };
-    const urls = Array.from({ length: REQUEST_LIMIT }, (_, i) => `www.roblox.com/games/getgameinstancesjson?placeId=${placeID}&startIndex=${i * 10 + offset}`);
-    const data = await Promise.all(urls.map(url => request(url, { retry: RETRY_LIMIT })));
-    const found = data
-        .flatMap(group => group.Collection)
-        .find(server => server.CurrentPlayers
-            .find(player => player.Id === userId || player.Thumbnail.Url === avatar));
-    if (total == offset) {
-        return { error: true, api: true, percentage };
-    }
-
-    await sleep(200)
-    if (!found) return findServer(userId, avatar, placeID, data[0].TotalCollectionSize, offset + REQUEST_LIMIT * 10, failAmount);
-    return found;
+const sliceIntoChunks = (arr, chunkSize) => {
+    return new Promise((resolve, reject) => {
+        const res = [];
+        for (let i = 0; i < arr.length; i += chunkSize) {
+            const chunk = arr.slice(i, i + chunkSize);
+            res.push(chunk);
+        }
+        return resolve(res);
+    })
 };
+
+const getThumbnails = function (data) {
+    return new Promise((resolve, reject) => {
+        fetch('https://thumbnails.roblox.com/v1/batch', {
+            credentials: 'include',
+            headers: {
+                Accept: 'application/json',
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data),
+            method: 'POST',
+        }).then((response) => {
+            response.json().then((data) => {
+                if (data.errors) {
+                    reject()
+                } else {
+                    resolve(data.data);
+                }
+            });
+        });
+    });
+};
+
+const getAllThumbnails = function (chunks) {
+    const getThumbnailsWrapped = avatarFetchLimiter.wrap(getThumbnails);
+    return Promise.all(
+        chunks.map((chunk) => {
+            return getThumbnailsWrapped(chunk);
+        })
+    );
+};
+
+const findServerFromToken = (token, servers, thumbnailsMap) => {
+    return new Promise((resolve, reject) => {
+        for (const [id, server] of Object.entries(servers)) {
+            if (server.playerTokens.includes(token)) {
+                const thumbnails = [];
+                server.playerTokens.forEach((token, index) => {
+                    thumbnails.push(thumbnailsMap[token]);
+                })
+                server.thumbnails = thumbnails;
+                resolve(server);
+                return
+            }
+        }
+    })
+}
+
+const getServerFromThumbnail = async (thumbnail, placeId) => {
+    return new Promise(async (resolve, reject) => {
+        let message = ""
+        message += "Fetching servers..."
+        addonMessage(message);
+        const servers = await getServers(placeId);
+        message += `\nFetched ${servers.length} servers.`
+        addonMessage(message);
+        const tokens = servers.map(server => server.playerTokens).flat()
+        message += `\nFound ${tokens.length} tokens`
+        addonMessage(message)
+        const requests = await generateRequest(tokens);
+        message += `\nGenerated ${requests.length} requests`
+        addonMessage(message)
+        const chunks = await sliceIntoChunks(requests, 99);
+        message += `\nSliced into ${chunks.length} chunks`
+        const thumbnails = await getAllThumbnails(chunks);
+        const thumbnailsArray = thumbnails.flat();
+        message += `\nGot ${thumbnailsArray.length} thumbnails`
+        const thumbnailsMap = Object.fromEntries(
+            thumbnailsArray.map(e => [e.requestId, e.imageUrl])
+        )
+
+        const thumbnailsFind = await thumbnailsArray.find(t => t.imageUrl === thumbnail)
+        if (thumbnailsFind) {
+            const server = await findServerFromToken(thumbnailsFind.requestId, servers, thumbnailsMap)
+            message += `\nFound server ${server.id}`
+            addonMessage(message)
+            resolve(server)
+        } else {
+            message += `\nCould not find server`
+            addonMessage(message)
+            reject('Server not found');
+        }
+    })
+}
 
 function clearAddonServerContainer() {
     let thing = document.getElementById('rbx-addon-server-search');
@@ -277,8 +373,8 @@ function clearAddonServerContainer() {
     }
 }
 
-function addonError(err) {
-    loadingAddonServerContainer(false);
+function addonMessage(err) {
+    loadingAddonServerContainer();
     let thing = document.getElementById('rbx-addon-server-search');
     let msg = document.getElementById('rbx-addon-search-err');
     if (msg !== null) msg.remove();
@@ -292,20 +388,13 @@ function addonError(err) {
     }
 }
 
-function loadingAddonServerContainer(i) {
+function loadingAddonServerContainer() {
     let thing = document.getElementById('rbx-addon-server-search');
     if (thing === null) throw new Error('Could not find addon server container!');
 
     let loading = document.getElementById('rbx-addon-loading');
     if (loading !== null)
         loading.remove();
-
-    if (i === true) {
-        bar = document.createElement('div');
-        bar.className = "bar";
-        bar.id = 'bar';
-        thing.appendChild(bar);
-    }
 }
 
 function displayAddonServerContainer(i) {
@@ -353,15 +442,6 @@ function createGameServerContainer() {
     rbxSrvCont.parentNode.appendChild(newNode);
     displayAddonServerContainer(false);
     addonGameServerContainerHasItems(false);
-}
-
-function onRemove(el, callback) {
-    new MutationObserver((mutations, observer) => {
-        if (!document.body.contains(el)) {
-            observer.disconnect();
-            callback();
-        }
-    }).observe(document.body, { childList: true });
 }
 
 function createInput(node) {
@@ -439,7 +519,6 @@ console.log("ROSEARCHER LOADED")
 if (runningGames === null) {
     let observer = new MutationObserver((mutations) => {
         mutations.forEach((mutation) => {
-            console.log("mutation", mutation)
             if (!mutation.addedNodes) return
             for (let i = 0; i < mutation.addedNodes.length; i++) {
                 let node = mutation.addedNodes[i]
