@@ -239,7 +239,7 @@ const RETRY_TIMES = 5
 const getServers = async (placeID, servers, cursor, retry = RETRY_TIMES) => {
     const requestWrapped = serverFetchLimiter.wrap(request)
     servers = servers || [];
-    const response = await requestWrapped(`games.roblox.com/v1/games/${placeID}/servers/Public${cursor ? `?cursor=${cursor}` : ''}`, { retry: RETRY_LIMIT });
+    const response = await requestWrapped(`games.roblox.com/v1/games/${placeID}/servers/Public?limit=100${cursor ? `&cursor=${cursor}` : ''}`, { retry: RETRY_LIMIT });
     const { nextPageCursor, data } = response;
     retry--;
 
