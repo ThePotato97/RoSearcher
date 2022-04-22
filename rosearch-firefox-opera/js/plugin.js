@@ -56,7 +56,7 @@ const onSubmit = async (user, isUsername) => {
     if (avatar) {
         console.log(`%c[Server Searcher] User avatar ${avatar.url}`, "color: #424242; font-size:16px;");
 
-        const server = await getServerFromThumbnail(avatar.url, placeId)
+        const server = await getServerFromThumbnail(avatar.url, userId, placeId)
         if (server) {
             console.log(`%c[Server Searcher] User found! ${JSON.stringify(server)}`, "color: #424242; font-size:16px;");
             displayServer(server);
@@ -234,23 +234,16 @@ function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-const RETRY_TIMES = 5
-
-const getServers = async (placeID, servers, cursor, retry = RETRY_TIMES) => {
+const getServers = async (placeID, servers, cursor) => {
     const requestWrapped = serverFetchLimiter.wrap(request)
     servers = servers || [];
-    const response = await requestWrapped(`games.roblox.com/v1/games/${placeID}/servers/Public${cursor ? `?cursor=${cursor}` : ''}`, { retry: RETRY_LIMIT });
+    const response = await requestWrapped(`games.roblox.com/v1/games/${placeID}/servers/Public?limit=100${cursor ? `&cursor=${cursor}` : ''}`, { retry: RETRY_LIMIT });
     const { nextPageCursor, data } = response;
-    retry--;
 
     if (nextPageCursor) {
         await sleep(50);
-        retry = RETRY_TIMES
-        return getServers(placeID, [...servers, ...data], nextPageCursor, retry);
-    } else if (retry > 0 && !nextPageCursor) {
-        await sleep(1000);
-        return getServers(placeID, [...servers, ...data], cursor, retry);
-    };
+        return getServers(placeID, [...servers, ...data], nextPageCursor);
+    }
 
     return [...servers, ...data];
 };
@@ -314,53 +307,117 @@ const getAllThumbnails = function (chunks) {
 
 const findServerFromToken = (token, servers, thumbnailsMap) => {
     return new Promise((resolve, reject) => {
+        let found = false
         for (const [id, server] of Object.entries(servers)) {
             if (server.playerTokens.includes(token)) {
+                found = true
                 const thumbnails = [];
-                server.playerTokens.forEach((token, index) => {
-                    thumbnails.push(thumbnailsMap[token]);
-                })
-                server.thumbnails = thumbnails;
-                resolve(server);
-                return
+                if (!thumbnailsMap) {
+                    generateRequest(server.playerTokens).then(requests => {
+                        sliceIntoChunks(requests, 10).then(chunks => {
+                            getAllThumbnails(chunks).then(res => {
+                                res = res.flat()
+                                thumbnailsMap = Object.fromEntries(
+                                    res.map(e => [e.requestId, e.imageUrl])
+                                )
+                                server.playerTokens.forEach((token, index) => {
+                                    thumbnails.push(thumbnailsMap[token]);
+                                })
+                                server.thumbnails = thumbnails;
+                                resolve(server);
+                                return
+                            })
+                        })
+                    })
+                } else {
+                    server.playerTokens.forEach((token, index) => {
+                        thumbnails.push(thumbnailsMap[token]);
+                    })
+                    server.thumbnails = thumbnails;
+                    resolve(server);
+                    return
+                }
             }
+        }
+        if (!found) {
+            resolve(null);
         }
     })
 }
 
-const getServerFromThumbnail = async (thumbnail, placeId) => {
+const saveUserToken = (userId, token) => {
+    if (!userId || !token) {
+        return;
+    }
+    const currentStorage = localStorage.getItem('userTokens');
+    const currentTokens = currentStorage ? JSON.parse(currentStorage) : {};
+    currentTokens[userId] = token;
+    localStorage.setItem('userTokens', JSON.stringify(currentTokens));
+};
+
+const getUserToken = (userId) => {
+    return new Promise((resolve, reject) => {
+        if (!userId) {
+            return;
+        }
+        const currentStorage = localStorage.getItem('userTokens');
+        const currentTokens = currentStorage ? JSON.parse(currentStorage) : {};
+        resolve(currentTokens[userId]);
+        return
+    })
+};
+
+const getServerFromThumbnail = async (thumbnail, userId, placeId) => {
     return new Promise(async (resolve, reject) => {
         let message = ""
-        message += "Fetching servers..."
+        const token = await getUserToken(userId);
+        if (!!token) {
+            message += "Found cached token for user";
+        }
+        message += "\nFetching servers..."
         addonMessage(message);
         const servers = await getServers(placeId);
         message += `\nFetched ${servers.length} servers.`
         addonMessage(message);
-        const tokens = servers.map(server => server.playerTokens).flat()
-        message += `\nFound ${tokens.length} tokens`
-        addonMessage(message)
-        const requests = await generateRequest(tokens);
-        message += `\nGenerated ${requests.length} requests`
-        addonMessage(message)
-        const chunks = await sliceIntoChunks(requests, 99);
-        message += `\nSliced into ${chunks.length} chunks`
-        const thumbnails = await getAllThumbnails(chunks);
-        const thumbnailsArray = thumbnails.flat();
-        message += `\nGot ${thumbnailsArray.length} thumbnails`
-        const thumbnailsMap = Object.fromEntries(
-            thumbnailsArray.map(e => [e.requestId, e.imageUrl])
-        )
+        let thumbnailsFind
+        let thumbnailsMap
+        if (!token) {
+            const tokens = servers.map(server => server.playerTokens).flat()
+            message += `\nFound ${tokens.length} tokens`
+            addonMessage(message)
 
-        const thumbnailsFind = await thumbnailsArray.find(t => t.imageUrl === thumbnail)
-        if (thumbnailsFind) {
-            const server = await findServerFromToken(thumbnailsFind.requestId, servers, thumbnailsMap)
-            message += `\nFound server ${server.id}`
+            const requests = await generateRequest(tokens);
+            message += `\nGenerated ${requests.length} requests`
             addonMessage(message)
-            resolve(server)
-        } else {
-            message += `\nCould not find server`
-            addonMessage(message)
-            reject('Server not found');
+            const chunks = await sliceIntoChunks(requests, 99);
+            message += `\nSliced into ${chunks.length} chunks`
+            const thumbnails = await getAllThumbnails(chunks);
+            const thumbnailsArray = thumbnails.flat();
+            message += `\nGot ${thumbnailsArray.length} thumbnails`
+            thumbnailsMap = Object.fromEntries(
+                thumbnailsArray.map(e => [e.requestId, e.imageUrl])
+            )
+            thumbnailsFind = await thumbnailsArray.find(t => t.imageUrl === thumbnail)
+        }
+
+        if (thumbnailsFind || token) {
+            const foundToken = token ? token : thumbnailsFind.requestId
+            let server
+            if (thumbnailsMap) {
+                server = await findServerFromToken(foundToken, servers, thumbnailsMap)
+            } else {
+                server = await findServerFromToken(foundToken, servers)
+            }
+            if (server) {
+                saveUserToken(userId, foundToken)
+                message += `\nFound server ${server.id}`
+                addonMessage(message)
+                resolve(server)
+            } else {
+                message += `\nCould not find server`
+                addonMessage(message)
+                reject('Server not found');
+            }
         }
     })
 }
