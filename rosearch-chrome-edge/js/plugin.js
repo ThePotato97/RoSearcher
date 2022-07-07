@@ -20,7 +20,9 @@ const serverFetchLimiter = new Bottleneck({
 
 
 const request = async (url, options = {}) => {
-    const { retry } = options;
+    const {
+        retry
+    } = options;
     try {
         const response = await fetch(`https://${url}`, options);
         const contentType = response.headers.get("content-type");
@@ -38,7 +40,10 @@ const request = async (url, options = {}) => {
     } catch (e) {
         if (!retry || retry === 1) throw e;
         await sleep(1000);
-        return request(url, { ...options, retry: retry - 1 });
+        return request(url, {
+            ...options,
+            retry: retry - 1
+        });
     }
 };
 
@@ -51,7 +56,9 @@ const onSubmit = async (user, isUsername) => {
     const userId = isUsername ? await getUserIdFromName(user) : user;
     await getUserOnlineStatus(userId);
     const avatar = await getAvatar(userId);
-    const placeId = await new Promise((resolve, reject) => { resolve(getPlaceId()) });
+    const placeId = await new Promise((resolve, reject) => {
+        resolve(getPlaceId())
+    });
     isLoading = true;
     if (avatar) {
         console.log(`%c[Server Searcher] User avatar ${avatar.url}`, "color: #424242; font-size:16px;");
@@ -164,14 +171,20 @@ function getUserOnlineStatus(userId) {
                 'Content-Type': 'application/json',
             },
             credentials: "include",
-            body: JSON.stringify({ userIds: [userId] }),
+            body: JSON.stringify({
+                userIds: [userId]
+            }),
         }).then(response => {
             if (response.errors) {
-                const { errors: [errors] } = response;
+                const {
+                    errors: [errors]
+                } = response;
                 addonMessage(errors.message)
                 throw new Error(errors.message)
             }
-            const { userPresences: [presence] } = response;
+            const {
+                userPresences: [presence]
+            } = response;
             if (!presence.userPresenceType || presence.userPresenceType !== 2) {
                 const errorType = (`User is ${!presence.userPresenceType ? 'offline' : 'not playing a game'}!`);
                 addonMessage(errorType);
@@ -237,8 +250,14 @@ function sleep(ms) {
 const getServers = async (placeID, servers, cursor) => {
     const requestWrapped = serverFetchLimiter.wrap(request)
     servers = servers || [];
-    const response = await requestWrapped(`games.roblox.com/v1/games/${placeID}/servers/Public?limit=100${cursor ? `&cursor=${cursor}` : ''}`, { retry: RETRY_LIMIT });
-    const { nextPageCursor, data } = response;
+    const response = await requestWrapped(`games.roblox.com/v1/games/${placeID}/servers/Public?limit=100${cursor ? `&cursor=${cursor}` : ''}`, {
+        credentials: "omit",
+        retry: RETRY_LIMIT
+    });
+    const {
+        nextPageCursor,
+        data
+    } = response;
 
     if (nextPageCursor) {
         await sleep(50);
@@ -587,10 +606,10 @@ if (runningGames === null) {
     })
 
     observer.observe(document.body, {
-        childList: true
-        , subtree: true
-        , attributes: false
-        , characterData: false
+        childList: true,
+        subtree: true,
+        attributes: false,
+        characterData: false
     })
 } else {
     createInput(runningGames.firstElementChild);
