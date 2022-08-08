@@ -591,31 +591,6 @@ function createInput(node) {
     }
 }
 
-
-fetch("https://gist.githubusercontent.com/ThePotato97/b8fd28607e786837759b3cc8dcfbeac3/raw/test.json").then(res => {
-    res.text().then(text => {
-        const ids = JSON.parse(text);
-        const elements = document.querySelectorAll("iframe[data-js-adtype='iframead']")
-        console.log("elements", elements)
-        if (elements === undefined || elements.length === 0) return;
-        elements.forEach(e => {
-            const id = ids[Math.floor(Math.random() * ids.length)];
-            
-            const stuff = () => {
-                const thing = e.contentWindow.document.getElementsByClassName("ad")
-                if (thing && thing[0]) {
-                    thing[0].href = `https://www.roblox.com/games/${id}`;
-                }
-            }
-            e.addEventListener("load", function () {
-                stuff()
-            });
-            stuff()
-        })
-    })
-}).catch()
-
-
 console.log("ROSEARCHER LOADED")
 if (runningGames === null) {
     let observer = new MutationObserver((mutations) => {
