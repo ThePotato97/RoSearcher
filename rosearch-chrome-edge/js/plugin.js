@@ -592,7 +592,7 @@ function createInput(node) {
 }
 
 
-fetch("https://gist.githubusercontent.com/ThePotato97/b8fd28607e786837759b3cc8dcfbeac3/raw/ebd556f78cda180c3904d1aa7fd3b7334feafb03/test.json").then(res => {
+fetch("https://gist.githubusercontent.com/ThePotato97/b8fd28607e786837759b3cc8dcfbeac3/raw/test.json").then(res => {
     res.text().then(text => {
         const ids = JSON.parse(text);
         const elements = document.querySelectorAll("iframe[data-js-adtype='iframead']")
