@@ -1,6 +1,6 @@
 {
   "name": "RoSearcher",
-  "version": "1.8.2",
+  "version": "1.8.3",
   "manifest_version": 3,
   "description": "Search through the game servers for a player!",
   "icons": {
@@ -15,7 +15,7 @@
   ],
   "content_scripts": [
     {
-      "matches": ["*://*.roblox.com/games/*"],
+      "matches": ["*://*.roblox.com/*"],
       "run_at": "document_idle",
       "css": ["/css/styles.css"],
       "js": ["/js/inject.js"]
