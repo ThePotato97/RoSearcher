@@ -1,24 +1,35 @@
 {
-  "name": "RoSearcher",
-  "version": "1.8.5",
+  "name": "SearchBlox",
   "manifest_version": 3,
-  "description": "Search through the game servers for a player!",
+  "version": "0.5.2",
+  "description": "Search Roblox servers for a desired player",
   "icons": {
-    "128": "icon.png"
+    "16": "images/16x16.png",
+    "32": "images/32x32.png",
+    "48": "images/48x48.png",
+    "128": "images/128x128.png"
   },
-  "host_permissions": ["*://*.roblox.com/*", "*://*.rbxcdn.com/*"],
+  "permissions": [
+    "scripting"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "host_permissions": [
+    "https://*.roblox.com/games/"
+  ],
   "web_accessible_resources": [
     {
-      "resources": ["/js/plugin.js", "/lib/bottleneck.js"],
-      "matches": ["*://*.roblox.com/*"]
-    }
-  ],
-  "content_scripts": [
-    {
-      "matches": ["*://*.roblox.com/*"],
-      "run_at": "document_idle",
-      "css": ["/css/styles.css"],
-      "js": ["/js/inject.js"]
+      "resources": [
+        "images/*.png",
+        "styles.css",
+        "content.js",
+        "load.js",
+        "panel.html"
+      ],
+      "matches": [
+        "<all_urls>"
+      ]
     }
   ]
 }
