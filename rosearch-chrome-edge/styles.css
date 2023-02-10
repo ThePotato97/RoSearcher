@@ -1,6 +1,6 @@
 #sbx-panel {
     float: right;
-    border-radius: 0 0 0 5px;
+    border-radius: 5px;
     background-color: white;
     height: 50px;
     width: 300px;
@@ -40,6 +40,7 @@
 
 #sbx-progress {
     position: absolute;
+    border-radius: 0 0 0 5px;
     transform: translate(0px, 43px);
     width: 226px;
 }
@@ -49,6 +50,7 @@
     height: 7px;
     width: 0%;
     background-color: #0077ff;
+    border-radius: 0px 0px 0px 5px;
     transition: width 0.5s, background-color 0.5s;
     -moz-transition: width 0.5s, background-color 0.5s;
     -webkit-transition: width 0.5s, background-color 0.5s;
