@@ -23,8 +23,6 @@ function waitForElm(selector) {
 
   if (document.body.classList.contains('dark-theme')) div.classList.add('dark');
 
-  const linebreak = document.createElement('br');
-
   const runningGames = await waitForElm('#rbx-running-games');
   runningGames.firstElementChild.appendChild(div);
 })();
