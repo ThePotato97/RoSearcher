@@ -172,40 +172,50 @@ async function findTarget(imageUrl, place) {
       icon.src = getURL('images/user-success.png');
       color(COLORS.GREEN);
       setTimeout(() => color(COLORS.BLUE), 1000);
-  
+
       const first = document.querySelectorAll('.rbx-game-server-item')[0] || document.querySelectorAll('#rbx-running-games > div.section-content-off.empty-game-instances-container > p')[0];
-      
+
       if (first.className == 'no-servers-message') {
         first.parentNode.style['display'] = 'flex';
         first.parentNode.style['flex-direction'] = 'column';
       }
 
       const item = document.createElement('li');
-  
+
       const thumbnails = allThumbnails.get(targetServerId);
-  
-      item.className = 'stack-row rbx-game-server-item highlighted';
-      item.innerHTML = `
-        <div class="section-left rbx-game-server-details'">
-        <div class="text-info rbx-game-status rbx-game-server-status'">${thumbnails.length} of ${maxPlayers} people max</div>
-        <span>
-        <button data-id="${targetServerId}" type="button" class="btn-full-width btn-control-xs rbx-game-server-join btn-primary-md btn-min-width">Join</button>
-        </span>
+      const firstFive = thumbnails.slice(0, 5);
+      const amountLeft = thumbnails.length - firstFive.length;
+      item.className = 'rbx-game-server-item col-md-3 col-sm-4 col-xs-6';
+      item.innerHTML = `<div class="card-item found-server">
+      <div class="player-thumbnails-container">
+         ${firstFive.map(url => `<span class="avatar avatar-headshot-md player-avatar">
+            <span class="thumbnail-2d-container avatar-card-image">
+              <img class="" src="${url}" alt="" title="">
+            </span>
+          </span>`).join('')}
+         <span class="avatar avatar-headshot-md player-avatar hidden-players-placeholder">+${amountLeft}</span>
+      </div>
+      <div class="rbx-game-server-details game-server-details">
+         <div class="text-info rbx-game-status rbx-game-server-status text-overflow">${thumbnails.length} of ${maxPlayers} people max</div>
+           <div class="server-player-count-gauge border">
+            <div class="gauge-inner-bar border" style="width: 100%;"></div>
+              </div>
+            <span>
+              <button data-id="${targetServerId}" type="button" class="btn-full-width btn-control-xs rbx-game-server-join game-server-join-btn btn-primary-md btn-min-width">Join</button>
+          </span>
         </div>
-        <div class="section-right rbx-game-server-players">
-        ${thumbnails.map(url => `<span class="avatar avatar-headshot-sm player-avatar"><span class="thumbnail-2d-container avatar-card-image"><img src="${url}"></span></span>`).join('')}
-        </div>`;
-  
+      </div>`;
+
       first.parentNode.insertBefore(item, first);
       highlighted.push(item);
-  
+
       const [join] = document.querySelectorAll(`[data-id="${targetServerId}"]`);
       join.onclick = () => chrome.runtime.sendMessage({ message: { place, id: targetServerId } });
-      status.innerText = 'Found target';
+      status.innerText = 'Found player';
     });
   } else {
     color(canceled ? COLORS.BLUE : COLORS.RED);
-    status.innerText = canceled ? 'Canceled search' : 'Target not found!';
+    status.innerText = canceled ? 'Canceled search' : 'Player not found!';
   }
 
   searching = false;
@@ -218,7 +228,7 @@ async function findTarget(imageUrl, place) {
 
 function renderServers() {
   highlighted.forEach((item) => {
-    item.remove();    
+    item.remove();
   });
 
   highlighted = [];
@@ -233,24 +243,33 @@ function renderServers() {
 
     const thumbnails = allThumbnails.get(targetServerId);
 
-    item.className = 'stack-row rbx-game-server-item highlighted';
-    item.innerHTML = `
-      <div class="section-left rbx-game-server-details'">
-      <div class="text-info rbx-game-status rbx-game-server-status'">${thumbnails.length} of ${maxPlayers} people max</div>
-      <span>
-      <button data-id="${targetServerId}" type="button" class="btn-full-width btn-control-xs rbx-game-server-join btn-primary-md btn-min-width">Join</button>
-      </span>
+    item.className = 'rbx-game-server-item col-md-3 col-sm-4 col-xs-6';
+    item.innerHTML = `<div class="card-item found-server">
+    <div class="player-thumbnails-container">
+       ${thumbnails.map(url => `<span class="avatar avatar-headshot-md player-avatar">
+          <span class="thumbnail-2d-container avatar-card-image">
+            <img class="" src="${url}" alt="" title="">
+          </span>
+        </span>`).join('')}
+       <span class="avatar avatar-headshot-md player-avatar hidden-players-placeholder">+3</span>
+    </div>
+    <div class="rbx-game-server-details game-server-details">
+       <div class="text-info rbx-game-status rbx-game-server-status text-overflow">${thumbnails.length} of ${maxPlayers} people max</div>
+         <div class="server-player-count-gauge border">
+          <div class="gauge-inner-bar border" style="width: 100%;"></div>
+            </div>
+          <span>
+            <button data-id="${targetServerId}" type="button" class="btn-full-width btn-control-xs rbx-game-server-join game-server-join-btn btn-primary-md btn-min-width">Join</button>
+        </span>
       </div>
-      <div class="section-right rbx-game-server-players">
-      ${thumbnails.map(url => `<span class="avatar avatar-headshot-sm player-avatar"><span class="thumbnail-2d-container avatar-card-image"><img src="${url}"></span></span>`).join('')}
-      </div>`;
+    </div>`;
 
     first.parentNode.insertBefore(item, first);
     highlighted.push(item);
 
     const [join] = document.querySelectorAll(`[data-id="${targetServerId}"]`);
     join.onclick = () => chrome.runtime.sendMessage({ message: { place, id: targetServerId } });
-    status.innerText = 'Found target';
+    status.innerText = 'Found player';
   });
 };
 

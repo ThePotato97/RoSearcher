@@ -1,4 +1,6 @@
 #sbx-panel {
+    float: right;
+    border-radius: 0 0 0 5px;
     background-color: white;
     height: 50px;
     width: 300px;
@@ -30,8 +32,11 @@
 
 #sbx-status {
     position: absolute;
-    transform: translate(320px, 14px);
+    transform: translate(-310px, 14px);
+    width: 280px;
+    text-align: right;
 }
+
 
 #sbx-progress {
     position: absolute;
@@ -64,8 +69,8 @@
     border-color: red !important;
 }
 
-.highlighted {
-    border: solid #00b06f !important;
+.found-server {
+    outline: #4CAF50 solid 2px;
 }
 
 #sbx-input::-webkit-input-placeholder {
