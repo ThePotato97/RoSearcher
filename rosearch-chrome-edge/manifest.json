@@ -1,13 +1,10 @@
 {
-  "name": "SearchBlox",
+  "name": "RoSearcher",
   "manifest_version": 3,
-  "version": "0.5.2",
-  "description": "Search Roblox servers for a desired player",
+  "version": "2.0.0",
+  "description": "Search through the game servers for a player!",
   "icons": {
-    "16": "images/16x16.png",
-    "32": "images/32x32.png",
-    "48": "images/48x48.png",
-    "128": "images/128x128.png"
+    "128": "images/icon.png"
   },
   "permissions": [
     "scripting"
@@ -28,7 +25,7 @@
         "panel.html"
       ],
       "matches": [
-        "<all_urls>"
+        "https://*.roblox.com/games/"
       ]
     }
   ]
