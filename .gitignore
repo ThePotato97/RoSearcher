@@ -4,3 +4,6 @@
 *.xpi
 web-ext-artifacts
 node_modules
+rosearcher-rewrite/dist
+rosearcher-rewrite/src/content.t
+rosearcher-rewrite/.parcel-cache/

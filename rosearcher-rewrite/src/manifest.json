@@ -10,7 +10,7 @@
     "scripting"
   ],
   "background": {
-    "service_worker": "background.js"
+    "service_worker": "background.ts"
   },
   "host_permissions": [
     "https://*.roblox.com/games/"
@@ -18,12 +18,9 @@
   "web_accessible_resources": [
     {
       "resources": [
-        "/lib/bottleneck.js",
         "images/*.png",
-        "styles.css",
-        "content.js",
-        "load.js",
-        "panel.html"
+        "styles.scss",
+        "content.ts"
       ],
       "matches": [
         "https://*.roblox.com/*"

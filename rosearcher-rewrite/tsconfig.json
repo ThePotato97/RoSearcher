@@ -1,0 +1,19 @@
+{
+    "compilerOptions": {
+      "jsx": "react",
+      "esModuleInterop": true,
+      "target": "es6",
+      "module": "commonjs",
+      "outDir": "dist",
+      "strict": true,
+      "lib": [
+        "ESNext",
+        "DOM"
+      ]
+    },
+    "include": [
+      "src/**/*",
+      "src/globals.d.ts"
+    ]
+  }
+  

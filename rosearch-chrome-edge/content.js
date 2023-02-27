@@ -1,3 +1,74 @@
+const avatarFetchLimiter = new Bottleneck({
+  maxConcurrent: 1,
+  minTime: 100
+});
+
+const serverFetchLimiter = new Bottleneck({
+  maxConcurrent: 1,
+  minTime: 100
+});
+
+class BidirectionalMap extends Map {
+  constructor(iterable) {
+    super(iterable);
+    this.reverseMap = new Map();
+  }
+
+  set(key, value) {
+    super.set(key, value);
+    this.reverseMap.set(value, key);
+    return this;
+  }
+
+  delete(key) {
+    const value = super.get(key);
+    if (value !== undefined) {
+      super.delete(key);
+      this.reverseMap.delete(value);
+      return true;
+    }
+    return false;
+  }
+
+  clear() {
+    super.clear();
+    this.reverseMap.clear();
+  }
+
+  getReverse(key) {
+    return this.reverseMap.get(key);
+  }
+
+  hasReverse(key) {
+    return this.reverseMap.has(key);
+  }
+}
+
+
+
+const MAX_RETRIES = 5; // Maximum number of retries
+const BASE_DELAY = 200; // Base delay in milliseconds
+const RETRY_DELAY_FACTOR = 2; // Delay factor for exponential backoff
+
+class queueManager {
+  queue = [];
+  addToQueue = (item) => {
+    this.queue.push(item);
+  }
+  fetchFromQueue = () => {
+    return this.queue.shift();
+  }
+}
+
+class Rosearcher {
+  tokenQueue = new queueManager();
+  constructor() {
+
+  }
+
+}
+
+
 const COLORS = {
   GREEN: '#00b06f',
   BLUE: '#0077ff',
@@ -11,6 +82,52 @@ const USER = {
   NEUTRAL: getURL('images/user.png'),
   ERROR: getURL('images/user-error.png'),
 };
+
+/**
+ * Convert a map of players to an array of objects with "token" and "thumbnail" properties.
+ * @param {Map<string, string>} playerMap - The map of players.
+ * @returns {Array<{token: string, thumbnail: string}>} An array of player objects.
+ */
+const convertToObject = (playerMap) => {
+  const result = [];
+  playerMap.forEach((value, name) => result.push({ token: name, thumbnail: value }));
+  return result;
+};
+
+/**
+ * Get an array of unprocessed players from a map of players, where the "thumbnail" property is undefined.
+ * @param {Map<string, string>} playerMap - The map of players.
+ * @returns {Array<{token: string, thumbnail: undefined}>} An array of unprocessed player objects.
+ */
+const getUnprocessed = (playerMap) => {
+  const result = [];
+  playerMap.forEach((value, name) => {
+    if (value === undefined) result.push({ token: name, thumbnail: value });
+  });
+  return result;
+};
+
+const getProcessedLength = (playerMap) => {
+  let result = 0;
+  playerMap.forEach((value) => {
+    if (value !== undefined) result += 1;
+  });
+  return result;
+};
+
+/**
+ * Get an array of processed players from a map of players, where the "thumbnail" property is defined.
+ * @param {Map<string, string>} playerMap - The map of players.
+ * @returns {Array<{token: string, thumbnail: string}>} An array of processed player objects.
+ */
+const getProcessed = (playerMap) => {
+  const result = [];
+  playerMap.forEach((value, name) => {
+    if (value !== undefined) result.push({ token: name, thumbnail: value });
+  });
+  return result;
+};
+
 
 const sleep = time => new Promise(res => setTimeout(res, time * 1000));
 
@@ -27,21 +144,35 @@ const get = async (url) => {
 };
 
 const post = async (url, body) => {
-  try {
-    const request = await fetch(`https://${url}`, {
-      method: 'POST',
-      body,
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
+  let retries = 0;
+  let delay = BASE_DELAY;
 
-    if (!request.ok) throw new Error('Request failed');
+  while (retries < MAX_RETRIES) {
+    try {
+      const request = await fetch(`https://${url}`, {
+        credentials: 'include',
+        method: 'POST',
+        body,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
 
-    return await request.json();
-  } catch (error) {
-    await sleep(0.2);
-    return await post(url, body);
+      if (!request.ok) throw new Error('Request failed');
+
+      return await request.json();
+    } catch (error) {
+      retries++;
+      if (retries >= MAX_RETRIES) {
+        throw new Error(`Failed to post data to ${url}`);
+      }
+
+      // Increase delay between each retry attempt
+      delay *= RETRY_DELAY_FACTOR;
+
+      // Wait before retrying
+      await sleep(delay);
+    }
   }
 };
 
@@ -71,8 +202,11 @@ let canceled = false;
 let foundAllServers = false;
 let searchingTarget = true;
 let allPlayers = [];
+const playersMap /** @type {Map<string, string>} */ = new BidirectionalMap();
+const serversMap /** @type {Map<string, string>} */ = new BidirectionalMap();
+const thumbnailMap /** @type {Map<string, string>} */ = new BidirectionalMap();
+
 let playersCount = 0;
-let targetsChecked = 0;
 let maxPlayers = 0;
 
 let targetServersId = [];
@@ -81,7 +215,8 @@ let highlighted = [];
 const allThumbnails = new Map();
 
 async function fetchServers(place = '', cursor = '', attempts = 0) {
-  const { nextPageCursor, data } = await get(`games.roblox.com/v1/games/${place}/servers/Public?limit=100&cursor=${cursor}`);
+  const requestWrapped = serverFetchLimiter.wrap(get)
+  const { nextPageCursor, data } = await requestWrapped(`games.roblox.com/v1/games/${place}/servers/Public?limit=100&cursor=${cursor}`);
 
   if (attempts >= 30) {
     foundAllServers = true;
@@ -95,15 +230,15 @@ async function fetchServers(place = '', cursor = '', attempts = 0) {
 
   data.forEach((server) => {
     server.playerTokens.forEach((playerToken) => {
-      playersCount += 1;
-      allPlayers.push({
-        token: playerToken,
-        type: 'AvatarHeadshot',
-        size: '150x150',
-        requestId: server.id,
-      });
+      playersMap.set(playerToken, undefined);
+      serversMap.set(playerToken, server.id);
     });
-
+    const playerFound = server.playerTokens.find(playerToken => {
+      return playerToken.token === "72138D7746871E24D00E726A23FFA593";
+    });
+    if (playerFound) {
+      console.log("Found ComplianceChecker")
+    }
     maxPlayers = server.maxPlayers;
   });
 
@@ -117,54 +252,58 @@ async function fetchServers(place = '', cursor = '', attempts = 0) {
 
 async function findTarget(imageUrl, place) {
   while (searchingTarget) {
+    await sleep(0.2);
     if (canceled) {
       searchingTarget = false;
     }
 
     const chosenPlayers = [];
-
-    for (let i = 0; i < 100; i++) {
-      const playerToken = allPlayers.shift();
-      if (!playerToken) break;
-      chosenPlayers.push(playerToken);
-    }
+    const unprocessedPlayers = getUnprocessed(playersMap);
+    const first100 = unprocessedPlayers.slice(0, 99);
+    first100.forEach((player) => {
+      chosenPlayers.push({
+        token: player.token,
+        type: 'AvatarHeadshot',
+        size: '150x150',
+        requestId: JSON.stringify({
+          serverId: serversMap.get(player.token),
+          token: player.token,
+        }),
+      });
+    });
 
     if (!chosenPlayers.length) {
       await sleep(0.1);
-      if (targetsChecked === playersCount && foundAllServers) {
+      if (getProcessedLength(playersMap) === playersMap.size && foundAllServers) {
         break;
       }
       continue;
     }
-
+    const postWrapped = avatarFetchLimiter.wrap(post)
+    const playersChecked = getProcessedLength(playersMap);
     post('thumbnails.roblox.com/v1/batch', JSON.stringify(chosenPlayers)).then(({ data: thumbnailsData }) => {
       if (canceled) return;
-
-      thumbnailsData.forEach((thumbnailData) => {
-        const thumbnails = allThumbnails.get(thumbnailData.requestId) || [];
-
-        if (thumbnails.length == 0) {
-          allThumbnails.set(thumbnailData.requestId, thumbnails);
-        }
-
-        targetsChecked += 1;
-
-        if (!thumbnails.includes(thumbnailData.imageUrl)) {
-          thumbnails.push(thumbnailData.imageUrl);
-        }
-
-        bar.style.width = `${Math.round((targetsChecked / playersCount) * 100)}%`;
-
-        const foundTarget = thumbnailData.imageUrl === imageUrl ? thumbnailData.requestId : null;
-
-        if (foundTarget) {
-          renderServers();
-
-          targetServersId.push(foundTarget);
-          searchingTarget = false;
-        }
+      console.log(thumbnailsData)
+      thumbnailsData.forEach((thumbnailData, i) => {
+        const { serverId, token } = JSON.parse(thumbnailData.requestId);
+        playersMap.set(token, thumbnailData.imageUrl);
+        serversMap.set(token, serverId);
+        const playersCount = playersMap.size;
+        bar.style.width = `${Math.round((playersChecked + i / playersCount) * 100)}%`;
       });
     });
+    const processedPlayers = getProcessed(playersMap);
+    const playerToken = playersMap.getReverse(imageUrl);
+    if (playerToken) {
+      const foundTarget = serversMap.get(playerToken);
+
+      if (foundTarget) {
+        renderServers();
+
+       // targetServersId.push(foundTarget);
+        searchingTarget = false;
+      }
+    }
   }
 
   if (targetServersId.length) {
@@ -281,10 +420,8 @@ async function find(imageUrl, place) {
   foundAllServers = false;
   searchingTarget = true;
   allPlayers = [];
-  playersCount = 0;
-  targetsChecked = 0;
   maxPlayers = 0;
-
+  serversMap.clear();
   status.innerText = 'Searching...';
   color(COLORS.BLUE);
   search.src = getURL('images/cancel.png');

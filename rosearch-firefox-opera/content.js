@@ -1,3 +1,5 @@
+const RETRY_LIMIT = 100;
+
 const post = async (/** @type {string} */ url, /** @type {string} */ body) => {
   try {
     const request = await fetch(`https://${url}`, {
@@ -40,15 +42,31 @@ function waitForElm(selector) {
 
 const sleep = (/** @type {number} */ time) => new Promise(res => setTimeout(res, time * 1000));
 
-const get = async (/** @type {string} */ url) => {
+const get = async (/** @type {string} */ url, options = {}) => {
+  const {
+    retry
+  } = options;
   try {
-    const request = await fetch(`https://${url}`);
-    if (!request.ok) throw new Error('Request failed');
-
-    return await request.json();
-  } catch (error) {
-    await sleep(0.2);
-    return await get(url);
+    const response = await fetch(`https://${url}`, options);
+    const contentType = response.headers.get("content-type");
+    if (contentType && contentType.indexOf("application/json") !== -1) {
+      const json = await response.json()
+      if (!json.errors) {
+        return json;
+      } else {
+        throw json.errors[0].message
+      }
+    } else {
+      console.log("notjson", response)
+      throw "not json"
+    }
+  } catch (e) {
+    if (!retry || retry === 1) throw e;
+    await sleep(1000);
+    return get(url, {
+      ...options,
+      retry: retry - 1
+    });
   }
 };
 
@@ -85,7 +103,7 @@ class ContentScript {
     this.highlighted = [];
     this.allThumbnails = new Map();
   }
-  init = async () =>  {
+  init = async () => {
     this.search = await waitForElm('#sbx-search');
     this.input = await waitForElm('#sbx-input');
     this.status = await waitForElm('#sbx-status');
@@ -110,7 +128,10 @@ class ContentScript {
     this.search.style.backgroundColor = color;
   }
   fetchServers = async (place = '', cursor = '', attempts = 0) => {
-    const { nextPageCursor, data } = await get(`games.roblox.com/v1/games/${place}/servers/Public?limit=100&cursor=${cursor}`);
+    const { nextPageCursor, data } = await get(`games.roblox.com/v1/games/${place}/servers/Public?limit=100&cursor=${cursor}`, {
+    credentials: "omit",
+    retry: RETRY_LIMIT
+});
     if (attempts >= 30) {
       this.foundAllServers = true;
       return;
@@ -142,15 +163,15 @@ class ContentScript {
       if (this.canceled) {
         this.searchingTarget = false;
       }
-  
+
       const chosenPlayers = [];
-  
+
       for (let i = 0; i < 100; i++) {
         const playerToken = this.allPlayers.shift();
         if (!playerToken) break;
         chosenPlayers.push(playerToken);
       }
-  
+
       if (!chosenPlayers.length) {
         await sleep(0.1);
         if (this.targetsChecked === this.playersCount && this.foundAllServers) {
@@ -158,47 +179,47 @@ class ContentScript {
         }
         continue;
       }
-  
+
       post('thumbnails.roblox.com/v1/batch', JSON.stringify(chosenPlayers)).then(({ data: thumbnailsData }) => {
         if (this.canceled) return;
-  
+
         thumbnailsData.forEach((/** @type {{ requestId: any; imageUrl: any; }} */ thumbnailData) => {
           const thumbnails = this.allThumbnails.get(thumbnailData.requestId) || [];
-  
+
           if (thumbnails.length == 0) {
             this.allThumbnails.set(thumbnailData.requestId, thumbnails);
           }
-  
+
           this.targetsChecked += 1;
-  
+
           if (!thumbnails.includes(thumbnailData.imageUrl)) {
             thumbnails.push(thumbnailData.imageUrl);
           }
-  
+
           this.bar.style.width = `${Math.round((this.targetsChecked / this.playersCount) * 100)}%`;
-  
+
           const foundTarget = thumbnailData.imageUrl === imageUrl ? thumbnailData.requestId : null;
-  
+
           if (foundTarget) {
             this.renderServers();
-  
+
             this.targetServersId.push(foundTarget);
             this.searchingTarget = false;
           }
         });
       });
     }
-  
+
     if (this.targetServersId.length) {
       this.renderServers();
     } else {
       this.color(this.canceled ? COLORS.BLUE : COLORS.RED);
       this.status.innerText = this.canceled ? 'Canceled search' : 'Player not found!';
     }
-  
+
     this.searching = false;
     this.canceled = false;
-  
+
     this.bar.style.width = '100%';
     this.input.disabled = false;
     this.search.src = getURL('images/search.png');
@@ -278,7 +299,7 @@ class ContentScript {
       this.icon.src = getURL('images/user-success.png');
       this.color(COLORS.GREEN);
       setTimeout(() => this.color(COLORS.BLUE), 1000);
-      
+
       const first = document.querySelectorAll('.rbx-game-server-item')[0];
       const item = document.createElement('li');
 

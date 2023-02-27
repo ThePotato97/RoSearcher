@@ -1,0 +1,161 @@
+#rosearch-panel {
+  float: right;
+  border-radius: 5px;
+  background-color: white;
+  height: 50px;
+  width: 300px;
+}
+
+#rosearch-search {
+  z-index: 1;
+  position: absolute;
+  transform: translate(225px);
+  border: none;
+  background-color: #0077ff;
+  transition: background-color 0.5s;
+  border-radius: 0px 5px 5px 0px;
+
+  &:disabled {
+    opacity: 50%;
+  }
+}
+
+#rosearch-input {
+  position: absolute;
+  width: 180px;
+  transform: translate(40px, 14px);
+  box-sizing: 0;
+  outline: none !important;
+  box-shadow: none !important;
+  border: none !important;
+  background-color: inherit;
+
+  &::-webkit-input-placeholder {
+    /* WebKit, Blink, Edge */
+    color: grey;
+    font-weight: 400 !important;
+  }
+
+  &:-moz-placeholder {
+    /* Mozilla Firefox 4 to 18 */
+    color: gray;
+    font-weight: 400 !important;
+  }
+}
+
+#rosearch-status {
+  position: absolute;
+  transform: translate(-310px, 14px);
+  width: 280px;
+  text-align: right;
+}
+
+#rosearch-progress {
+  position: absolute;
+  border-radius: 0 0 0 5px;
+  transform: translate(0px, 43px);
+  width: 226px;
+}
+
+#rosearch-bar {
+  position: relative;
+  height: 7px;
+  width: 0%;
+  background-color: #0077ff;
+  border-radius: 0px 0px 0px 5px;
+  transition: width 0.5s, background-color 0.5s;
+  -moz-transition: width 0.5s, background-color 0.5s;
+  -webkit-transition: width 0.5s, background-color 0.5s;
+}
+
+#rosearch-user {
+  position: absolute;
+  height: 20px;
+  width: 20px;
+  transform: translate(15px, 15px);
+}
+
+.dark {
+  background-color: #393b3d !important;
+
+  #rosearch-input::-webkit-input-placeholder {
+    /* WebKit, Blink, Edge */
+    color: #757575 !important;
+  }
+
+  #rosearch-input:-moz-placeholder {
+    /* Mozilla Firefox 4 to 18 */
+    color: #757575 !important;
+  }
+}
+
+.invalid {
+  border-color: red !important;
+}
+
+.found-server {
+  outline: #4CAF50 solid 2px;
+}
+
+.highlighted {
+  border: solid #00b06f !important;
+}
+
+/* .stack-row {
+  &.rbx-game-server-item {
+    height: 236px;
+    margin: 0px 0px 6px;
+    padding: 12px;
+    position: relative;
+    text-align: center;
+    width: 970px;
+    transform: translate(0px, 17px);
+    border-style: solid;
+    border-width: 1px;
+    background-color: #393b3d;
+    border-color: #656668;
+
+    .section-left {
+      &.rbx-game-server-details {
+        width: 23%;
+        text-align: center;
+
+        .text-info {
+          &.rbx-game-status {
+            &.rbx-game-server-status {
+              font-size: 12px;
+              color: #fff;
+            }
+          }
+        }
+      }
+    }
+
+    .section-right {
+      &.rbx-game-server-players {
+        width: 77%;
+        text-align: left;
+        transform: translate(5px, 0px);
+
+        .avatar {
+          &.avatar-headshot-sm {
+            &.player-avatar {
+              display: inline-block;
+              margin-right: 10px;
+              
+              .thumbnail-2d-container {
+                &.avatar-card-image {
+                  img {
+                    width: 32px;
+                    height: 32px;
+                    border-radius: 16px;
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+} */
