@@ -1,0 +1,8 @@
+*.zip
+*.pem
+*.crx
+*.xpi
+web-ext-artifacts
+node_modules
+dist
+.parcel-cache/

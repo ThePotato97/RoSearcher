@@ -7,7 +7,8 @@
     "128": "images/icon.png"
   },
   "permissions": [
-    "scripting"
+    "scripting",
+    "storage"
   ],
   "background": {
     "service_worker": "background.ts"
@@ -20,7 +21,7 @@
       "resources": [
         "images/*.png",
         "styles.scss",
-        "content.ts"
+        "content.tsx"
       ],
       "matches": [
         "https://*.roblox.com/*"
