@@ -8,7 +8,8 @@
   },
   "permissions": [
     "scripting",
-    "storage"
+    "storage",
+    "webRequest"
   ],
   "background": {
     "service_worker": "background.ts"

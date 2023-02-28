@@ -23,6 +23,9 @@
     "es6": true
   },
   "rules": {
+    // Note: you must disable the base rule as it can report incorrect errors
+    "no-shadow": "off",
+    "@typescript-eslint/no-shadow": "error",
     "max-classes-per-file": 0,
     "react/jsx-one-expression-per-line": [
       2,

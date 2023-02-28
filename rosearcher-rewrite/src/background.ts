@@ -1,3 +1,4 @@
+/* eslint-disable no-restricted-globals */
 
 chrome.tabs.onUpdated.addListener((tabId, changeInfo, { url }) => {
   if (!url || changeInfo.status !== 'complete' || !/https:\/\/.+roblox.com\/games/g.test(url)) return;
@@ -13,6 +14,28 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, { url }) => {
   });
 });
 
+chrome.webRequest.onBeforeRequest.addListener(
+  async (details) => {
+    if (details.method === "GET" && details.type === "xmlhttprequest") {
+      const response = await fetch(details.url);
+      const headers = new Headers(response.headers);
+      headers.set("Access-Control-Allow-Origin", "*");
+      return {
+        redirectUrl: URL.createObjectURL(
+          new Blob([await response.blob()], {
+            type: response.headers.get("content-type"),
+          })
+        ),
+        headers,
+      };
+    }
+  },
+  { urls: ["<all_urls>"] },
+  ["blocking"]
+);
+
+
+
 interface TokenMap {
   [key: number]: string;
 }
@@ -22,7 +45,7 @@ interface LocalStorage {
 }
 
 const func = (place: number, id: number) => window.Roblox.GameLauncher.joinGameInstance(place, id);
-chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+chrome.runtime.onMessage.addListener((request, sender) => {
   const { message, action } = request;
   const { tab } = sender;
   if (!tab?.id) return
@@ -41,17 +64,16 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       const { userId, token } = message;
       if (!userId || !token) return
       chrome.storage.local.get("rosearcher-tokens", (result: LocalStorage) => {
-        let tokens = result["rosearcher-tokens"] || new Map();
+        const tokens = result["rosearcher-tokens"] || new Map();
         const tokensMap: Map<string, string> = new Map(Object.entries(tokens));
         tokensMap.set(userId, token);
         chrome.storage.local.set({
-          ["rosearcher-tokens"]: Object.fromEntries(Array.from(tokensMap.entries()))
+          "rosearcher-tokens": Object.fromEntries(Array.from(tokensMap.entries()))
         });
       });
       break
     }
-    case 'getToken': {
-      const { userId } = message;
+    default: {
       break
     }
   }
