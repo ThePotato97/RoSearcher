@@ -1,11 +1,13 @@
 {
     "compilerOptions": {
+      "allowImportingTsExtensions": true,
       "jsx": "react",
       "esModuleInterop": true,
       "target": "es6",
       "module": "commonjs",
       "outDir": "dist",
       "strict": true,
+      "baseUrl": "./src",
       "lib": [
         "ESNext",
         "DOM"
@@ -14,6 +16,9 @@
     "include": [
       "src/**/*",
       "src/globals.d.ts"
-    ]
+    ],
+    "resolve": {
+      "extensions": [".ts", ".tsx", ".js", ".jsx", ".json"]
+    }
   }
   

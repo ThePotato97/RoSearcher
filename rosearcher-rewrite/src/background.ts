@@ -14,28 +14,6 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, { url }) => {
   });
 });
 
-chrome.webRequest.onBeforeRequest.addListener(
-  async (details) => {
-    if (details.method === "GET" && details.type === "xmlhttprequest") {
-      const response = await fetch(details.url);
-      const headers = new Headers(response.headers);
-      headers.set("Access-Control-Allow-Origin", "*");
-      return {
-        redirectUrl: URL.createObjectURL(
-          new Blob([await response.blob()], {
-            type: response.headers.get("content-type"),
-          })
-        ),
-        headers,
-      };
-    }
-  },
-  { urls: ["<all_urls>"] },
-  ["blocking"]
-);
-
-
-
 interface TokenMap {
   [key: number]: string;
 }

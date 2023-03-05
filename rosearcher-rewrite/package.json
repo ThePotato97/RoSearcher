@@ -4,6 +4,7 @@
   "description": "searcher",
   "license": "GPL-3.0",
   "scripts": {
+    "preinstall": "npx only-allow pnpm",
     "start": "parcel watch src/manifest.json --host localhost --config @parcel/config-webextension",
     "build": "parcel build src/manifest.json --config @parcel/config-webextension"
   },
@@ -36,5 +37,9 @@
     "react-dom": "^18.2.0",
     "react-redux": "^8.0.5",
     "redux": "^4.2.1"
+  },
+  "volta": {
+    "node": "18.14.2",
+    "yarn": "4.0.0-rc.39"
   }
 }

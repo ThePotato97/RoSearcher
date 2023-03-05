@@ -1,5 +1,5 @@
 Arguments: 
-  C:\Users\potato\scoop\apps\nodejs\current\node.exe C:\Users\potato\scoop\apps\nodejs\current\bin\node_modules\yarn\bin\yarn.js eslint --fix src/**.tsx
+  C:\Users\potato\scoop\apps\nodejs\current\node.exe C:\Users\potato\scoop\apps\nodejs\current\bin\node_modules\yarn\bin\yarn.js add @types/service-worker --dev
 
 PATH: 
   C:\Program Files (x86)\VMware\VMware Workstation\bin\;C:\Program Files\Eclipse Adoptium\jdk-17.0.6.10-hotspot\bin;B:\depot_tools;C:\Program Files\ImageMagick-7.1.0-Q16-HDRI;C:\VulkanSDK\1.3.231.1\Bin;C:\ProgramData\scoop\shims;C:\WINDOWS\system32;C:\WINDOWS;C:\WINDOWS\System32\Wbem;C:\WINDOWS\System32\WindowsPowerShell\v1.0\;C:\WINDOWS\System32\OpenSSH\;C:\ProgramData\chocolatey\bin;C:\Program Files\dotnet\;C:\Program Files\NVIDIA Corporation\NVIDIA NvDLISR;C:\Program Files (x86)\gnupg\bin;C:\Program Files (x86)\NVIDIA Corporation\PhysX\Common;C:\Program Files\WireGuard\;C:\Users\potato\.aftman\bin;C:\Program Files (x86)\Windows Kits\10\Windows Performance Toolkit\;C:\Program Files (x86)\Gpg4win\..\GnuPG\bin;C:\Program Files\GitHub CLI\;C:\Program Files\CMake\bin;B:\USD\scripts;C:\Program Files\Microsoft SQL Server\110\Tools\Binn\;C:\Program Files (x86)\Microsoft SQL Server\100\Tools\Binn\;C:\Program Files\Microsoft SQL Server\100\Tools\Binn\;C:\Program Files\Microsoft SQL Server\100\DTS\Binn\;C:\Program Files (x86)\Graphic Remedy\gDEBugger\;C:\Program Files\NVIDIA Corporation\NVIDIA Texture Tools\;C:\Program Files\RedHat\Podman\;C:\Users\potato\AppData\Local\Programs\Python\Python311\Scripts\;C:\Users\potato\AppData\Local\Programs\Python\Python311\;C:\Users\potato\scoop\apps\vscode\current\bin;C:\Users\potato\scoop\apps\Python310\current\Scripts;C:\Users\potato\scoop\apps\Python310\current;C:\Users\potato\scoop\apps\Mpv\current;C:\Users\potato\miniconda3;C:\Users\potato\miniconda3\Library\mingw-w64\bin;C:\Users\potato\miniconda3\Library\usr\bin;C:\Users\potato\miniconda3\Library\bin;C:\Users\potato\miniconda3\Scripts;C:\Users\potato\scoop\apps\Python27\current\Scripts;C:\Users\potato\scoop\apps\Python27\current;C:\Users\potato\scoop\apps\Rustup\current\.cargo\bin;C:\Users\potato\scoop\apps\dotnet-sdk\current;C:\Users\potato\scoop\apps\python\current\Scripts;C:\Users\potato\scoop\apps\python\current;C:\Users\potato\scoop\apps\nodejs\current\bin;C:\Users\potato\scoop\apps\nodejs\current;C:\Users\potato\scoop\shims;C:\Users\potato\AppData\Local\Microsoft\WindowsApps;C:\Program Files (x86)\Nmap;C:\Users\potato\.dotnet\tools;C:\Program Files\JetBrains\IntelliJ IDEA 2022.2.3\bin;C:\Users\potato\AppData\Local\JetBrains\Toolbox\scripts;C:\Users\potato\.dotnet\tools;C:\Users\potato\AppData\Local\Programs\Fiddler;C:\Users\potato\.dotnet\tools;C:\Users\potato\AppData\Local\Programs\Microsoft VS Code\bin;C:\Users\potato\.dotnet\tools;C:\Users\potato\AppData\Local\Programs\Microsoft VS Code\
@@ -14,12 +14,17 @@ Platform:
   win32 x64
 
 Trace: 
-  SyntaxError: B:\GitHub\RoSearcher\rosearcher-rewrite\package.json: Unexpected token } in JSON at position 1069
-      at JSON.parse (<anonymous>)
-      at C:\Users\potato\scoop\persist\nodejs\bin\node_modules\yarn\lib\cli.js:1629:59
-      at Generator.next (<anonymous>)
-      at step (C:\Users\potato\scoop\persist\nodejs\bin\node_modules\yarn\lib\cli.js:310:30)
-      at C:\Users\potato\scoop\persist\nodejs\bin\node_modules\yarn\lib\cli.js:321:13
+  Error: https://registry.yarnpkg.com/@types%2fservice-worker: Not found
+      at params.callback [as _callback] (C:\Users\potato\scoop\persist\nodejs\bin\node_modules\yarn\lib\cli.js:66145:18)
+      at self.callback (C:\Users\potato\scoop\persist\nodejs\bin\node_modules\yarn\lib\cli.js:140890:22)
+      at Request.emit (node:events:513:28)
+      at Request.<anonymous> (C:\Users\potato\scoop\persist\nodejs\bin\node_modules\yarn\lib\cli.js:141862:10)
+      at Request.emit (node:events:513:28)
+      at IncomingMessage.<anonymous> (C:\Users\potato\scoop\persist\nodejs\bin\node_modules\yarn\lib\cli.js:141784:12)
+      at Object.onceWrapper (node:events:627:28)
+      at IncomingMessage.emit (node:events:525:35)
+      at endReadableNT (node:internal/streams/readable:1359:12)
+      at process.processTicksAndRejections (node:internal/process/task_queues:82:21)
 
 npm manifest: 
   {
@@ -36,13 +41,16 @@ npm manifest:
       "@parcel/transformer-sass": "2.8.3",
       "@types/react": "^18.0.28",
       "@typescript-eslint/eslint-plugin": "^5.53.0",
+      "eslint-config-prettier": "^8.6.0",
       "eslint-plugin-jsx-a11y": "^6.7.1",
       "parcel": "^2.8.3",
       "preact-jsx-runtime": "^1.2.0",
+      "prettier": "^2.8.4",
       "process": "^0.11.10",
       "typescript": "^4.9.5"
     },
     "dependencies": {
+      "@reduxjs/toolkit": "^1.9.3",
       "@types/react-dom": "^18.0.11",
       "@typescript-eslint/parser": "^5.53.0",
       "bottleneck": "^2.19.5",
@@ -54,6 +62,8 @@ npm manifest:
       "eslint-plugin-react": "^7.32.2",
       "react": "^18.2.0",
       "react-dom": "^18.2.0",
+      "react-redux": "^8.0.5",
+      "redux": "^4.2.1"
     }
   }
 
@@ -86,7 +96,7 @@ Lockfile:
       chalk "^2.0.0"
       js-tokens "^4.0.0"
   
-  "@babel/runtime@^7.20.7":
+  "@babel/runtime@^7.12.1", "@babel/runtime@^7.20.7", "@babel/runtime@^7.9.2":
     version "7.21.0"
     resolved "https://registry.yarnpkg.com/@babel/runtime/-/runtime-7.21.0.tgz#5b55c9d394e5fcf304909a8b00c07dc217b56673"
     integrity sha512-xwII0//EObnq89Ji5AKYQaRYiW/nZ3llSv29d49IuxPhKbtJoLP+9QUUZ4nVragQVtaVGeZrpB+ZtG/Pdy/POw==
@@ -885,6 +895,16 @@ Lockfile:
       chrome-trace-event "^1.0.2"
       nullthrows "^1.1.1"
   
+  "@reduxjs/toolkit@^1.9.3":
+    version "1.9.3"
+    resolved "https://registry.yarnpkg.com/@reduxjs/toolkit/-/toolkit-1.9.3.tgz#27e1a33072b5a312e4f7fa19247fec160bbb2df9"
+    integrity sha512-GU2TNBQVofL09VGmuSioNPQIu6Ml0YLf4EJhgj0AvBadRlCGzUWet8372LjvO4fqKZF2vH1xU0htAa7BrK9pZg==
+    dependencies:
+      immer "^9.0.16"
+      redux "^4.2.0"
+      redux-thunk "^2.4.2"
+      reselect "^4.1.7"
+  
   "@swc/helpers@^0.4.12":
     version "0.4.14"
     resolved "https://registry.npmjs.org/@swc/helpers/-/helpers-0.4.14.tgz"
@@ -896,6 +916,14 @@ Lockfile:
     version "0.2.0"
     resolved "https://registry.npmjs.org/@trysound/sax/-/sax-0.2.0.tgz"
     integrity sha512-L7z9BgrNEcYyUYtF+HaEfiS5ebkh9jXqbszz7pC0hRBPaatV0XjSD3+eHrpqFemQfgwiFF0QPIarnIihIDn7OA==
+  
+  "@types/hoist-non-react-statics@^3.3.1":
+    version "3.3.1"
+    resolved "https://registry.yarnpkg.com/@types/hoist-non-react-statics/-/hoist-non-react-statics-3.3.1.tgz#1124aafe5118cb591977aeb1ceaaed1070eb039f"
+    integrity sha512-iMIqiko6ooLrTh1joXodJK5X9xeEALT1kM5G3ZLhD3hszxBdIEd5C75U834D9mLcINgD4OyZf5uQXjkuYydWvA==
+    dependencies:
+      "@types/react" "*"
+      hoist-non-react-statics "^3.3.0"
   
   "@types/json-schema@^7.0.9":
     version "7.0.11"
@@ -942,6 +970,11 @@ Lockfile:
     version "7.3.13"
     resolved "https://registry.yarnpkg.com/@types/semver/-/semver-7.3.13.tgz#da4bfd73f49bd541d28920ab0e2bf0ee80f71c91"
     integrity sha512-21cFJr9z3g5dW8B0CVI9g2O9beqaThGQ6ZFBqHfwhzLDKUxaqTIy3vnfah/UPkfOiF2pLq+tGz+W8RyCskuslw==
+  
+  "@types/use-sync-external-store@^0.0.3":
+    version "0.0.3"
+    resolved "https://registry.yarnpkg.com/@types/use-sync-external-store/-/use-sync-external-store-0.0.3.tgz#b6725d5f4af24ace33b36fafd295136e75509f43"
+    integrity sha512-EwmlvuaxPNej9+T4v5AuBPJa2x2UOJVdjCtDHgcDqitUeOtjnJKJ+apYjVcAoBEMjKW1VVFGZLUb5+qqa09XFA==
   
   "@typescript-eslint/eslint-plugin@^5.53.0":
     version "5.53.0"
@@ -1643,6 +1676,11 @@ Lockfile:
       object.assign "^4.1.2"
       object.entries "^1.1.5"
   
+  eslint-config-prettier@^8.6.0:
+    version "8.6.0"
+    resolved "https://registry.yarnpkg.com/eslint-config-prettier/-/eslint-config-prettier-8.6.0.tgz#dec1d29ab728f4fa63061774e1672ac4e363d207"
+    integrity sha512-bAF0eLpLVqP5oEVUFKpMA+NnRFICwn9X8B5jrR9FcqnYBuPbqWEjTEspPWMj5ye6czoSLDweCzSo3Ko7gGrZaA==
+  
   eslint-import-resolver-node@^0.3.7:
     version "0.3.7"
     resolved "https://registry.yarnpkg.com/eslint-import-resolver-node/-/eslint-import-resolver-node-0.3.7.tgz#83b375187d412324a1963d84fa664377a23eb4d7"
@@ -2085,6 +2123,13 @@ Lockfile:
     dependencies:
       function-bind "^1.1.1"
   
+  hoist-non-react-statics@^3.3.0, hoist-non-react-statics@^3.3.2:
+    version "3.3.2"
+    resolved "https://registry.yarnpkg.com/hoist-non-react-statics/-/hoist-non-react-statics-3.3.2.tgz#ece0acaf71d62c2969c2ec59feff42a4b1a85b45"
+    integrity sha512-/gGivxi8JPKWNm/W0jSmzcMPpfpPLc3dY/6GxhX2hQ9iGj3aDfklV4ET7NjKpSinLpJ5vafa9iiGIEZg10SfBw==
+    dependencies:
+      react-is "^16.7.0"
+  
   htmlnano@^2.0.0:
     version "2.0.3"
     resolved "https://registry.npmjs.org/htmlnano/-/htmlnano-2.0.3.tgz"
@@ -2108,6 +2153,11 @@ Lockfile:
     version "5.2.4"
     resolved "https://registry.yarnpkg.com/ignore/-/ignore-5.2.4.tgz#a291c0c6178ff1b960befe47fcdec301674a6324"
     integrity sha512-MAb38BcSbH0eHNBxn7ql2NH/kX33OkB3lZ1BNdh7ENeRChHTYsTvWrMubiIAMNS2llXEEgZ1MUOBtXChP3kaFQ==
+  
+  immer@^9.0.16:
+    version "9.0.19"
+    resolved "https://registry.yarnpkg.com/immer/-/immer-9.0.19.tgz#67fb97310555690b5f9cd8380d38fc0aabb6b38b"
+    integrity sha512-eY+Y0qcsB4TZKwgQzLaE/lqYMlKhv5J9dyd2RhhtGhNo2njPXDqU9XPfcNfa3MIDsdtZt5KlkIsirlo4dHsWdQ==
   
   immutable@^4.0.0:
     version "4.2.4"
@@ -2848,6 +2898,11 @@ Lockfile:
     resolved "https://registry.yarnpkg.com/prelude-ls/-/prelude-ls-1.2.1.tgz#debc6489d7a6e6b0e7611888cec880337d316396"
     integrity sha512-vkcDPrRZo1QZLbn5RLGPpg/WmIQ65qoWWhcGKf/b5eplkkarX0m9z8ppCat4mlOqUsWpyNuYgO3VRyrYHSzX5g==
   
+  prettier@^2.8.4:
+    version "2.8.4"
+    resolved "https://registry.yarnpkg.com/prettier/-/prettier-2.8.4.tgz#34dd2595629bfbb79d344ac4a91ff948694463c3"
+    integrity sha512-vIS4Rlc2FNh0BySk3Wkd6xmwxB0FpOndW5fisM5H8hsZSxU2VWVB5CWIkIjWvrHjIhxk2g3bfMKM87zNTrZddw==
+  
   process@^0.11.10:
     version "0.11.10"
     resolved "https://registry.yarnpkg.com/process/-/process-0.11.10.tgz#7332300e840161bda3e69a1d1d91a7d4bc16f182"
@@ -2885,10 +2940,27 @@ Lockfile:
     resolved "https://registry.npmjs.org/react-error-overlay/-/react-error-overlay-6.0.9.tgz"
     integrity sha512-nQTTcUu+ATDbrSD1BZHr5kgSD4oF8OFjxun8uAaL8RwPBacGBNPf/yAuVVdx17N8XNzRDMrZ9XcKZHCjPW+9ew==
   
-  react-is@^16.13.1:
+  react-is@^16.13.1, react-is@^16.7.0:
     version "16.13.1"
     resolved "https://registry.yarnpkg.com/react-is/-/react-is-16.13.1.tgz#789729a4dc36de2999dc156dd6c1d9c18cea56a4"
     integrity sha512-24e6ynE2H+OKt4kqsOvNd8kBpV65zoxbA4BVsEOB3ARVWQki/DHzaUoC5KuON/BiccDaCCTZBuOcfZs70kR8bQ==
+  
+  react-is@^18.0.0:
+    version "18.2.0"
+    resolved "https://registry.yarnpkg.com/react-is/-/react-is-18.2.0.tgz#199431eeaaa2e09f86427efbb4f1473edb47609b"
+    integrity sha512-xWGDIW6x921xtzPkhiULtthJHoJvBbF3q26fzloPCK0hsvxtPVelvftw3zjbHWSkR2km9Z+4uxbDDK/6Zw9B8w==
+  
+  react-redux@^8.0.5:
+    version "8.0.5"
+    resolved "https://registry.yarnpkg.com/react-redux/-/react-redux-8.0.5.tgz#e5fb8331993a019b8aaf2e167a93d10af469c7bd"
+    integrity sha512-Q2f6fCKxPFpkXt1qNRZdEDLlScsDWyrgSj0mliK59qU6W5gvBiKkdMEG2lJzhd1rCctf0hb6EtePPLZ2e0m1uw==
+    dependencies:
+      "@babel/runtime" "^7.12.1"
+      "@types/hoist-non-react-statics" "^3.3.1"
+      "@types/use-sync-external-store" "^0.0.3"
+      hoist-non-react-statics "^3.3.2"
+      react-is "^18.0.0"
+      use-sync-external-store "^1.0.0"
   
   react-refresh@^0.9.0:
     version "0.9.0"
@@ -2909,6 +2981,18 @@ Lockfile:
     dependencies:
       picomatch "^2.2.1"
   
+  redux-thunk@^2.4.2:
+    version "2.4.2"
+    resolved "https://registry.yarnpkg.com/redux-thunk/-/redux-thunk-2.4.2.tgz#b9d05d11994b99f7a91ea223e8b04cf0afa5ef3b"
+    integrity sha512-+P3TjtnP0k/FEjcBL5FZpoovtvrTNT/UXd4/sluaSyrURlSlhLSzEdfsTBW7WsKB6yPvgd7q/iZPICFjW4o57Q==
+  
+  redux@^4.2.0, redux@^4.2.1:
+    version "4.2.1"
+    resolved "https://registry.yarnpkg.com/redux/-/redux-4.2.1.tgz#c08f4306826c49b5e9dc901dee0452ea8fce6197"
+    integrity sha512-LAUYz4lc+Do8/g7aeRa8JkyDErK6ekstQaqWQrNRW//MY1TvCEpMtpTWvlQ+FPbWCx+Xixu/6SHt5N0HR+SB4w==
+    dependencies:
+      "@babel/runtime" "^7.9.2"
+  
   regenerator-runtime@^0.13.11, regenerator-runtime@^0.13.7:
     version "0.13.11"
     resolved "https://registry.npmjs.org/regenerator-runtime/-/regenerator-runtime-0.13.11.tgz"
@@ -2927,6 +3011,11 @@ Lockfile:
     version "3.2.0"
     resolved "https://registry.yarnpkg.com/regexpp/-/regexpp-3.2.0.tgz#0425a2768d8f23bad70ca4b90461fa2f1213e1b2"
     integrity sha512-pq2bWo9mVD43nbts2wGv17XLiNLya+GklZ8kaDLV2Z08gDCsGpnKn9BFMepvWuHCbyVvY7J5o5+BVvoQbmlJLg==
+  
+  reselect@^4.1.7:
+    version "4.1.7"
+    resolved "https://registry.yarnpkg.com/reselect/-/reselect-4.1.7.tgz#56480d9ff3d3188970ee2b76527bd94a95567a42"
+    integrity sha512-Zu1xbUt3/OPwsXL46hvOOoQrap2azE7ZQbokq61BQfiXvhewsKDwhMeZjTX9sX0nvw1t/U5Audyn1I9P/m9z0A==
   
   resolve-from@^4.0.0:
     version "4.0.0"
@@ -3268,6 +3357,11 @@ Lockfile:
     integrity sha512-7rKUyy33Q1yc98pQ1DAmLtwX109F7TIfWlW1Ydo8Wl1ii1SeHieeh0HHfPeL2fMXK6z0s8ecKs9frCuLJvndBg==
     dependencies:
       punycode "^2.1.0"
+  
+  use-sync-external-store@^1.0.0:
+    version "1.2.0"
+    resolved "https://registry.yarnpkg.com/use-sync-external-store/-/use-sync-external-store-1.2.0.tgz#7dbefd6ef3fe4e767a0cf5d7287aacfb5846928a"
+    integrity sha512-eEgnFxGQ1Ife9bzYs6VLi8/4X6CObHMw9Qr9tPY43iKwsPw8xE8+EFsf/2cFZ5S3esXgpWgtSCtLNS41F+sKPA==
   
   utility-types@^3.10.0:
     version "3.10.0"

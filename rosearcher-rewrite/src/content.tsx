@@ -6,14 +6,17 @@ import React, {
     useState,
 } from 'react';
 import { createRoot } from 'react-dom/client';
+import { BidirectionalMap, QueueManager } from './helpers';
+import { GameServerDetails } from 'components/GameServerDetails';
+import { ServerItem } from 'components/ServerItem';
+
+const { getURL, sendMessage } = chrome.runtime;
 
 enum COLORS {
     SUCCESS = '#00b06f',
     NEUTRAL = '#0077ff',
     ERROR = '#ff3e3e',
 }
-
-const { getURL } = chrome.runtime;
 
 const USER = {
     SUCCESS: getURL('images/user-success.png'),
@@ -22,8 +25,13 @@ const USER = {
 };
 
 const avatarFetchLimiter = new Bottleneck({
-    maxConcurrent: 1,
-    minTime: 50,
+    maxConcurrent: 50,
+    minTime: 20,
+    strategy: Bottleneck.strategy.LEAK,
+});
+
+const serverFetchLimiter = new Bottleneck({
+    minTime: 301,
 });
 
 const fetchJSON = async (url: RequestInfo, options?: RequestInit) => {
@@ -34,7 +42,10 @@ const fetchJSON = async (url: RequestInfo, options?: RequestInit) => {
         }
         return await response.json();
     } catch (error) {
-        return Promise.reject(error);
+        if (error instanceof Error) {
+            return Promise.reject(error);
+        }
+        return Promise.reject(new Error(error));
     }
 };
 
@@ -56,104 +67,9 @@ const waitForElm = ({ selector }: { selector: string }) =>
         });
     });
 
-class BidirectionalMap<K, V> extends Map<K, V> {
-    reverseMap: Map<V, K[]>;
-
-    constructor() {
-        super();
-        this.reverseMap = new Map<V, K[]>();
-    }
-
-    set(key: K, value: V | V[]): this {
-        if (Array.isArray(value)) {
-            value.forEach((v) => {
-                super.set(key, v);
-                this.updateReverseMap(v, key);
-            });
-        } else {
-            super.set(key, value);
-            this.updateReverseMap(value, key);
-        }
-        return this;
-    }
-
-    private updateReverseMap(value: V, key: K) {
-        let reverseValue = this.reverseMap.get(value);
-        if (!reverseValue) {
-            reverseValue = [];
-            this.reverseMap.set(value, reverseValue);
-        }
-        if (!reverseValue.includes(key)) {
-            reverseValue.push(key);
-        }
-    }
-
-    delete(key: K): boolean {
-        const value = super.get(key);
-        if (value !== undefined) {
-            super.delete(key);
-            const keys = this.reverseMap.get(value);
-            if (keys) {
-                const index = keys.indexOf(key);
-                if (index !== -1) {
-                    keys.splice(index, 1);
-                }
-                if (keys.length === 0) {
-                    this.reverseMap.delete(value);
-                }
-                return true;
-            }
-        }
-        return false;
-    }
-
-    clear(): void {
-        super.clear();
-        this.reverseMap.clear();
-    }
-
-    getReverse(value: V): K[] {
-        return this.reverseMap.get(value) || [];
-    }
-
-    hasReverse(value: V): boolean {
-        return this.reverseMap.has(value);
-    }
-}
-
 const MAX_RETRIES = 5; // Maximum number of retries
 const BASE_DELAY = 200; // Base delay in milliseconds
 const RETRY_DELAY_FACTOR = 2; // Delay factor for exponential backoff
-
-class QueueManager {
-    queue: string[] = [];
-
-    addToQueue = (item: string) => {
-        if (this.queue.includes(item)) return;
-        this.queue.push(item);
-    };
-
-    addToQueueFront = (item: string) => {
-        if (this.queue.includes(item)) return;
-        this.queue.unshift(item);
-    };
-
-    fetchFromQueue = () => this.queue.shift();
-
-    removeFetchAmount = (amount: number) => this.queue.splice(0, amount);
-
-    appendTable = (table: Array<string>) => {
-        this.queue = this.queue.concat(table);
-    };
-
-    clearQueue = () => {
-        this.queue = [];
-    };
-
-    length = () => this.queue.length;
-
-    has = (item: string) => this.queue.includes(item);
-}
 
 interface ServerData {
     id: string;
@@ -393,78 +309,7 @@ GameButton.defaultProps = {
     children: [],
 };
 
-interface GameServerDetailsProps {
-    playerInfo: PlayerInfo;
-    maxPlayers: number;
-    currentPlayers: number;
-    children?: JSX.Element | JSX.Element[];
-}
 
-function GameServerDetails({
-    playerInfo,
-    maxPlayers,
-    currentPlayers,
-    children,
-}: GameServerDetailsProps) {
-    return (
-        <div className="rbx-private-game-server-details game-server-details border-right">
-            <div className="section-header">
-                <span className="font-bold" />
-            </div>
-            <div className="rbx-private-owner">
-                <a
-                    className="avatar avatar-card-fullbody owner-avatar"
-                    href={`https://www.roblox.com/users/${playerInfo.id}/profile`}
-                    title={playerInfo.name}
-                >
-                    <span className="thumbnail-2d-container avatar-card-image">
-                        <img
-                            className=""
-                            src={playerInfo.thumbnail}
-                            alt=""
-                            title=""
-                        />
-                    </span>
-                </a>
-                <a
-                    className="text-name text-overflow"
-                    href="https://www.roblox.com/users/13277651/profile"
-                >
-                    <span data-rblx-badge-text-container="" className="jss119">
-                        <span
-                            data-rblx-badge-text-el=""
-                            className="jss117"
-                            style={{ fontWeight: '500' }}
-                        >
-                            <span className="jss120">{playerInfo.name}</span>
-                        </span>
-                        <span
-                            data-rblx-badge-icon-el=""
-                            role="button"
-                            tabIndex={0}
-                            className="jss115"
-                        />
-                    </span>
-                </a>
-            </div>
-            <div className="text-info rbx-game-status rbx-private-game-server-status text-overflow">
-                {`${currentPlayers} of ${maxPlayers} people max`}
-            </div>
-            <div className="server-player-count-gauge border">
-                <div
-                    className="gauge-inner-bar border"
-                    style={{
-                        width: `${(currentPlayers / (maxPlayers || 1)) * 100}%`,
-                    }}
-                />
-            </div>
-            <span>{children}</span>
-        </div>
-    );
-}
-GameServerDetails.defaultProps = {
-    children: [],
-};
 
 interface ServerInfo {
     id: string;
@@ -472,19 +317,6 @@ interface ServerInfo {
     imageUrls: string[];
 }
 
-interface ServerItemProps {
-    children?: ReactNode[];
-}
-function ServerItem({ children }: ServerItemProps) {
-    return (
-        <li className="rbx-private-game-server-item col-md-3 col-sm-4 col-xs-6 highlighted">
-            <div className="card-item">{children}</div>
-        </li>
-    );
-}
-ServerItem.defaultProps = {
-    children: [],
-};
 
 interface ServerBodyNew {
     children?: ReactNode | ReactNode[];
@@ -577,7 +409,7 @@ function MainComponent({
 
     useEffect(() => {
         chrome.storage.local.get(['rosearcher-tokens'], (currentTokens) => {
-            const result = currentTokens['rosearcher-tokens'];
+            const result = currentTokens['rosearcher-tokens'] ?? [];
             setSavedTokens(new Map(Object.entries(result)));
         });
     }, []);
@@ -683,7 +515,7 @@ function MainComponent({
                                 >
                                     <GameButton
                                         onClick={() =>
-                                            chrome.runtime.sendMessage({
+                                            sendMessage({
                                                 action: 'join',
                                                 message: {
                                                     place: placeId,
@@ -727,8 +559,6 @@ function MainComponent({
 const initialState = {
     items: [],
 };
-  
-  
 
 interface SearchState {
     progress: number;
@@ -762,6 +592,8 @@ interface SearchState {
 
         currentPlaceId = placeId;
 
+        cursors: string[] = [];
+
         constructor(props: []) {
             super(props);
             this.state = {
@@ -779,15 +611,16 @@ interface SearchState {
             };
         }
 
-        fetchTokens = async () => {
+        fetchTokens = async (cursor?: string) => {
+            const hasCursor = cursor !== undefined;
+            const currentCursor = cursor ?? this.currentCursor;
             const { isSearching } = this.state;
             if (this.serversPaged || !isSearching) return false;
             const fetchData = async () => {
                 const params = new URLSearchParams({
                     limit: '100',
                 });
-                if (this.currentCursor)
-                    params.append('cursor', this.currentCursor);
+                if (currentCursor) params.append('cursor', currentCursor);
 
                 const response = await fetchJSON(
                     `https://games.roblox.com/v1/games/${
@@ -800,7 +633,15 @@ interface SearchState {
                 if (!response.data)
                     throw new Error(`Failed to fetch server data.`);
                 const { nextPageCursor, data } = response;
+                if (nextPageCursor && data.length !== 100) {
+                    console.warn('Incomplete page of data returned from API');
+                    return true;
+                }
+                if (hasCursor) return data;
                 if (nextPageCursor) {
+                    if (!this.cursors.includes(nextPageCursor)) {
+                        this.cursors.push(nextPageCursor);
+                    }
                     this.currentCursor = nextPageCursor;
                 } else {
                     this.serversPaged = true;
@@ -825,12 +666,14 @@ interface SearchState {
                     serverData.tokens.includes(this.loadedToken);
 
                 serverData.tokens.forEach((token) => {
-                    if (savedTokenFound) {
-                        this.tokenQueue.addToQueueFront(token);
-                    } else {
-                        this.tokenQueue.addToQueue(token);
+                    if (!this.thumbnailsMap.has(token)) {
+                        if (savedTokenFound) {
+                            this.tokenQueue.addToQueueFront(token);
+                        } else {
+                            this.tokenQueue.addToQueue(token);
+                        }
+                        this.serversMap.set(token, serverData.id);
                     }
-                    this.serversMap.set(token, serverData.id);
                 });
             });
             return true;
@@ -993,7 +836,7 @@ interface SearchState {
             if (!isSearching) {
                 this.cancel(
                     this.foundPlayer() ? COLORS.SUCCESS : COLORS.NEUTRAL,
-                    'Search cancelled!'
+                    'Search Cancelled!'
                 );
                 return true;
             }
@@ -1002,7 +845,7 @@ interface SearchState {
                 this.setState({ currentColor: COLORS.SUCCESS });
             }
             this.updateProgress();
-            if (this.tokenQueue.length() === 0 && !tokensResolved) {
+            if (this.tokenQueue.length() === 0 && !tokensResolved && !fetchTokens) {
                 return true;
             }
             await this.searchLoop();
@@ -1010,7 +853,7 @@ interface SearchState {
 
         handleSearch = async (input: string) => {
             // eslint-disable-next-line react/destructuring-assignment
-            if (this.state.isSearching) {
+            if (this.state.isSearching || input.length === 0) {
                 this.stop();
                 return;
             }
@@ -1056,8 +899,19 @@ interface SearchState {
                 this.stop();
                 return;
             }
-            const foundPlayer = this.foundPlayer();
+            {
+                const foundPlayer = this.foundPlayer();
+                if (!foundPlayer) {
+                    // retry all known cursors
+                    const promises = this.cursors.map((cursor) =>
+                        this.fetchTokens(cursor)
+                    );
+                    await Promise.all(promises);
+                    console.log("currentqueue", this.tokenQueue.length());
 
+                }
+            }
+            const foundPlayer = this.foundPlayer();
             if (foundPlayer) {
                 this.cancel(COLORS.SUCCESS, 'Player found!');
             } else {
