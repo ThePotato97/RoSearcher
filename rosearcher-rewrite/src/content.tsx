@@ -7,8 +7,7 @@ import React, {
 } from 'react';
 import { createRoot } from 'react-dom/client';
 import { BidirectionalMap, QueueManager } from './helpers';
-import { GameServerDetails } from 'components/GameServerDetails';
-import { ServerItem } from 'components/ServerItem';
+import { GameButton, GameServerDetails, ServerBody, ServerHeader, ServerItem } from './components';
 
 const { getURL, sendMessage } = chrome.runtime;
 
@@ -45,7 +44,7 @@ const fetchJSON = async (url: RequestInfo, options?: RequestInit) => {
         if (error instanceof Error) {
             return Promise.reject(error);
         }
-        return Promise.reject(new Error(error));
+        return Promise.reject(error);
     }
 };
 
@@ -266,49 +265,12 @@ async function getThumbnail(userId: string) {
     return thumbnailResponse?.data[0].imageUrl;
 }
 
-interface ServerHeaderProps {
-    children?: JSX.Element | JSX.Element[];
-}
 
-function ServerHeader({ children }: ServerHeaderProps) {
-    return (
-        <div key="rosearcher-header" id="rosearcher-header" className="stack">
-            <div key="container-header" className="container-header">
-                <h2>RoSearcher</h2>
-                {children}
-            </div>
-        </div>
-    );
-}
-ServerHeader.defaultProps = {
-    children: [],
-};
 interface PlayerInfo {
     id: string;
     name: string;
     thumbnail: string;
 }
-
-interface GameButtonProps {
-    children?: ReactNode;
-    onClick: MouseEventHandler<HTMLButtonElement>;
-}
-
-function GameButton({ children, onClick }: GameButtonProps) {
-    return (
-        <button
-            type="button"
-            className="btn-full-width btn-control-xs rbx-private-game-server-join game-server-join-btn btn-primary-md btn-min-width"
-            onClick={onClick}
-        >
-            {children}
-        </button>
-    );
-}
-GameButton.defaultProps = {
-    children: [],
-};
-
 
 
 interface ServerInfo {
@@ -318,22 +280,7 @@ interface ServerInfo {
 }
 
 
-interface ServerBodyNew {
-    children?: ReactNode | ReactNode[];
-}
-function ServerBody({ children }: ServerBodyNew) {
-    return (
-        <ul
-            id="rbx-rosearcher-game-server-item-container"
-            className="card-list rbx-private-game-server-item-container"
-        >
-            {children}
-        </ul>
-    );
-}
-ServerBody.defaultProps = {
-    children: [],
-};
+
 
 const getTokenFromStorage = async (userId: string) => {
     if (!userId) return;
@@ -345,22 +292,6 @@ const getTokenFromStorage = async (userId: string) => {
         });
     });
 };
-
-interface State {
-    progress: number;
-    currentGameId: string | undefined;
-    searchButtonEnabled: boolean;
-    icon: string;
-    statusMessage: string;
-    isSearching: boolean;
-    currentPlayerId: string;
-    currentPlayerThumbnail: string;
-    currentPlayerName: string;
-    servers: ServerInfo[];
-    currentColor: string;
-    searchboxInput: string;
-    maxPlayers: number;
-}
 
 interface MainComponentProps {
     placeId: string;
@@ -556,9 +487,6 @@ function MainComponent({
         </>
     );
 }
-const initialState = {
-    items: [],
-};
 
 interface SearchState {
     progress: number;
