@@ -6,8 +6,16 @@ import React, {
     useState,
 } from 'react';
 import { createRoot } from 'react-dom/client';
-import { BidirectionalMap, QueueManager } from './helpers';
-import { GameButton, GameServerDetails, ServerBody, ServerHeader, ServerItem } from './components';
+import { Stack, Box, Divider, Avatar } from '@mui/material';
+import Grid from '@mui/material/Unstable_Grid2'; // Grid version 2
+import { BidirectionalMap, QueueManager } from './helpers/index.ts';
+import {
+    GameButton,
+    GameServerDetails,
+    ServerBody,
+    ServerHeader,
+    ServerItem,
+} from './components/index.ts';
 
 const { getURL, sendMessage } = chrome.runtime;
 
@@ -48,7 +56,11 @@ const fetchJSON = async (url: RequestInfo, options?: RequestInit) => {
     }
 };
 
-const waitForElm = ({ selector }: { selector: string }) =>
+const waitForElm = ({
+    selector,
+}: {
+    selector: string;
+}): Promise<Element | null> =>
     new Promise((resolve) => {
         if (document.querySelector(selector))
             resolve(document.querySelector(selector));
@@ -265,22 +277,17 @@ async function getThumbnail(userId: string) {
     return thumbnailResponse?.data[0].imageUrl;
 }
 
-
 interface PlayerInfo {
     id: string;
     name: string;
     thumbnail: string;
 }
 
-
 interface ServerInfo {
     id: string;
     token: string;
     imageUrls: string[];
 }
-
-
-
 
 const getTokenFromStorage = async (userId: string) => {
     if (!userId) return;
@@ -424,53 +431,73 @@ function MainComponent({
                     servers.map((server) => {
                         const { id, token, imageUrls } = server;
                         return (
-                            <ServerItem key={server.id}>
-                                {imageUrls.map((imageUrl) => (
-                                    <span
-                                        key={imageUrl}
-                                        className="avatar avatar-headshot-md player-avatar"
-                                    >
-                                        <span className="thumbnail-2d-container avatar-card-image">
-                                            <img
-                                                src={imageUrl}
-                                                alt=""
-                                                title=""
-                                            />
-                                        </span>
-                                    </span>
-                                ))}
-                                <GameServerDetails
-                                    playerInfo={currentPlayerInfo}
-                                    maxPlayers={maxPlayers}
-                                    currentPlayers={imageUrls.length}
+                            <Box key={id} sx={{ flexGrow: 1, width: '100%' }}>
+                                <Grid
+                                    container
+                                    sx={{ columnGap: 2 }}
+                                    spacing={2}
                                 >
-                                    <GameButton
-                                        onClick={() =>
-                                            sendMessage({
-                                                action: 'join',
-                                                message: {
-                                                    place: placeId,
-                                                    id,
-                                                },
-                                            })
-                                        }
+                                    <Box
+                                        p={2}
+                                        sx={{
+                                            borderBottom: 1,
+                                            bgColor: 'primary.main',
+                                        }}
                                     >
-                                        Join
-                                    </GameButton>
-                                    <GameButton
-                                        onClick={() =>
-                                            toggleSavedToken(
-                                                currentPlayerInfo.id,
-                                                token
-                                            )
-                                        }
-                                    >
-                                        {savedTokens.get(currentPlayerInfo.id)
-                                            ? 'Forget Token'
-                                            : 'Remember Token'}
-                                    </GameButton>
-                                </GameServerDetails>
-                            </ServerItem>
+                                        <GameServerDetails
+                                            playerInfo={currentPlayerInfo}
+                                            maxPlayers={maxPlayers}
+                                            currentPlayers={imageUrls.length}
+                                        >
+                                            <GameButton
+                                                onClick={() =>
+                                                    sendMessage({
+                                                        action: 'join',
+                                                        message: {
+                                                            place: placeId,
+                                                            id,
+                                                        },
+                                                    })
+                                                }
+                                            >
+                                                Join
+                                            </GameButton>
+                                            <GameButton
+                                                onClick={() =>
+                                                    toggleSavedToken(
+                                                        currentPlayerInfo.id,
+                                                        token
+                                                    )
+                                                }
+                                            >
+                                                {savedTokens.get(
+                                                    currentPlayerInfo.id
+                                                )
+                                                    ? 'Forget Token'
+                                                    : 'Remember Token'}
+                                            </GameButton>
+                                        </GameServerDetails>
+                                    </Box>
+                                    <Divider orientation="vertical" flexItem />
+                                    <Box sx={{ flexGrow: 1 }}>
+                                        <Grid container spacing={2}>
+                                            {imageUrls.map((image) => (
+                                                <Grid key={image} xs={1} sm={1}>
+                                                    <Avatar
+                                                        sx={{
+                                                            bgcolor: 'gray',
+                                                            height: 60,
+                                                            width: 60,
+                                                        }}
+                                                        alt="Remy Sharp"
+                                                        src={image}
+                                                    />
+                                                </Grid>
+                                            ))}
+                                        </Grid>
+                                    </Box>
+                                </Grid>
+                            </Box>
                         );
                     })
                 ) : (
@@ -773,7 +800,11 @@ interface SearchState {
                 this.setState({ currentColor: COLORS.SUCCESS });
             }
             this.updateProgress();
-            if (this.tokenQueue.length() === 0 && !tokensResolved && !fetchTokens) {
+            if (
+                this.tokenQueue.length() === 0 &&
+                !tokensResolved &&
+                !fetchTokens
+            ) {
                 return true;
             }
             await this.searchLoop();
@@ -835,8 +866,7 @@ interface SearchState {
                         this.fetchTokens(cursor)
                     );
                     await Promise.all(promises);
-                    console.log("currentqueue", this.tokenQueue.length());
-
+                    console.log('currentqueue', this.tokenQueue.length());
                 }
             }
             const foundPlayer = this.foundPlayer();
@@ -874,17 +904,15 @@ interface SearchState {
         }
     }
     const mount = async () => {
-        const container = await waitForElm({
+        const container = (await waitForElm({
             selector: '#running-game-instances-container',
-        });
-        if (container instanceof HTMLElement) {
-            const newElement = document.createElement('div');
-            newElement.id = 'rosearcher';
-            newElement.className = 'stack';
-            container.prepend(newElement);
-            const root = createRoot(newElement);
-            root.render(<Search />);
-        }
+        })) as Element;
+        const newElement = document.createElement('div');
+        newElement.id = 'rosearcher';
+        newElement.className = 'stack';
+        container.prepend(newElement);
+        const root = createRoot(newElement);
+        root.render(<Search />);
     };
     mount();
 })();

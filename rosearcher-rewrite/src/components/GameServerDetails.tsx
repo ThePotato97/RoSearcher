@@ -18,7 +18,7 @@ function GameServerDetails({
     playerInfo, maxPlayers, currentPlayers, children,
 }: GameServerDetailsProps) {
     return (
-        <div className="rbx-private-game-server-details game-server-details border-right">
+        <div className="rbx-private-game-server-details game-server-details">
             <div className="section-header">
                 <span className="font-bold" />
             </div>
